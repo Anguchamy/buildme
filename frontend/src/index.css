@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply scroll-smooth;
+  }
+
+  /* Light mode default */
+  body {
+    @apply bg-light-1 text-gray-900 font-sans antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+  }
+
+  /* Dark mode */
+  html.dark body {
+    @apply bg-surface-0 text-white;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { @apply w-1.5 h-1.5; }
+  ::-webkit-scrollbar-track { @apply bg-light-2; }
+  ::-webkit-scrollbar-thumb { @apply bg-light-4 rounded-full; }
+  ::-webkit-scrollbar-thumb:hover { @apply bg-brand-500; }
+
+  html.dark ::-webkit-scrollbar-track { @apply bg-surface-1; }
+  html.dark ::-webkit-scrollbar-thumb { @apply bg-surface-4; }
+}
+
+@layer components {
+  /* Card */
+  .card {
+    @apply bg-white border border-light-3 rounded-xl p-4 shadow-sm;
+  }
+  html.dark .card {
+    @apply bg-surface-2 border-white/5 shadow-none;
+  }
+
+  /* Glass */
+  .glass {
+    @apply bg-white border border-light-3 rounded-xl shadow-sm;
+  }
+  html.dark .glass {
+    @apply bg-surface-2 border-white/5 shadow-none;
+  }
+
+  /* Inputs */
+  .input {
+    @apply bg-white border border-light-3 rounded-lg px-3 py-2 text-gray-900
+           placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500
+           focus:border-transparent transition-all duration-200 w-full;
+  }
+  html.dark .input {
+    @apply bg-surface-3 border-white/10 text-white placeholder:text-gray-500;
+  }
+
+  /* Label */
+  .label {
+    @apply text-sm font-medium text-gray-600 mb-1 block;
+  }
+  html.dark .label {
+    @apply text-gray-400;
+  }
+}
