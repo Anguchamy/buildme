@@ -3,6 +3,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin
+.qodo
+.claude
+.mvn
 
 ### IntelliJ IDEA ###
 .idea/modules.xml
@@ -43,7 +46,8 @@ build/
 *.env
 application-local.properties
 backend/src/main/resources/application-prod.properties
-node_modules/
+frontend/node_modules/
 frontend/node/
 dist/
 backend/src/main/resources/static/
+backend/target/
