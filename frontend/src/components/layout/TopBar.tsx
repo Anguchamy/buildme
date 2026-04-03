@@ -2,6 +2,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useLogoutMutation } from '@/hooks/useAuth'
 import { useThemeStore } from '@/store/themeStore'
 import Button from '@/components/common/Button'
+import AuthenticatedImage from '@/components/common/AuthenticatedImage'
 
 function SunIcon() {
   return (
@@ -62,8 +63,14 @@ export default function TopBar() {
 
         {/* User */}
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 bg-brand-500 rounded-full flex items-center justify-center text-xs font-bold text-white">
-            {user?.fullName?.[0]?.toUpperCase() ?? 'U'}
+          <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
+            {user?.avatarUrl ? (
+              <AuthenticatedImage src={user.avatarUrl} alt={user.fullName} className="w-full h-full object-cover" />
+            ) : (
+              <div className="w-full h-full bg-brand-500 flex items-center justify-center text-xs font-bold text-white">
+                {user?.fullName?.[0]?.toUpperCase() ?? 'U'}
+              </div>
+            )}
           </div>
           <div className="hidden md:block">
             <p className="text-sm font-medium text-gray-900 dark:text-white leading-tight">{user?.fullName}</p>

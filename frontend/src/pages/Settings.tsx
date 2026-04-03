@@ -6,6 +6,8 @@ import { workspaceApi } from '@/api/workspaceApi'
 import subscriptionApi from '@/api/subscriptionApi'
 import api from '@/api/axios'
 import Button from '@/components/common/Button'
+import AuthenticatedImage from '@/components/common/AuthenticatedImage'
+import { mediaApi } from '@/api/mediaApi'
 
 type Tab = 'profile' | 'workspace' | 'subscription' | 'notifications'
 
@@ -42,18 +44,29 @@ export default function Settings() {
 
   // ── Profile ──
   const [fullName, setFullName] = useState(user?.fullName ?? '')
-  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatarUrl ?? null)
+  const [avatarBase64, setAvatarBase64] = useState<string | null>(null)
+  const avatarFileRef = useRef<File | null>(null)
   const [profileSaved, setProfileSaved] = useState(false)
 
   useEffect(() => {
     setFullName(user?.fullName ?? '')
-    setAvatarPreview(user?.avatarUrl ?? null)
+    setAvatarBase64(null)
+    avatarFileRef.current = null
   }, [user?.id])
 
   const updateProfile = useMutation({
-    mutationFn: () => api.patch('/api/users/me', { fullName, avatarUrl: avatarPreview }).then((r) => r.data),
+    mutationFn: async () => {
+      let avatarUrl: string | undefined
+      if (avatarFileRef.current && currentWorkspaceId) {
+        const asset = await mediaApi.uploadDirect(currentWorkspaceId, avatarFileRef.current)
+        avatarUrl = mediaApi.getFileUrl(currentWorkspaceId, asset.id)
+      }
+      return api.patch('/users/me', { fullName, ...(avatarUrl ? { avatarUrl } : {}) }).then((r) => r.data)
+    },
     onSuccess: (updated) => {
       setUser(updated)
+      setAvatarBase64(null)
+      avatarFileRef.current = null
       setProfileSaved(true)
       setTimeout(() => setProfileSaved(false), 2000)
     },
@@ -62,8 +75,9 @@ export default function Settings() {
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
+    avatarFileRef.current = file
     const reader = new FileReader()
-    reader.onload = () => setAvatarPreview(reader.result as string)
+    reader.onload = () => setAvatarBase64(reader.result as string)
     reader.readAsDataURL(file)
   }
 
@@ -198,8 +212,10 @@ export default function Settings() {
           <h2 className="font-semibold text-gray-900 dark:text-white">Profile</h2>
           <div className="flex items-center gap-4">
             <div className="relative flex-shrink-0">
-              {avatarPreview ? (
-                <img src={avatarPreview} alt="avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-brand-500/30" />
+              {avatarBase64 ? (
+                <img src={avatarBase64} alt="avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-brand-500/30" />
+              ) : user?.avatarUrl ? (
+                <AuthenticatedImage src={user.avatarUrl} alt="avatar" className="w-16 h-16 rounded-full object-cover ring-2 ring-brand-500/30" />
               ) : (
                 <div className="w-16 h-16 bg-brand-500 rounded-full flex items-center justify-center text-xl font-bold text-white">
                   {user?.fullName?.[0]?.toUpperCase() ?? 'U'}
@@ -382,9 +398,9 @@ export default function Settings() {
             {notifItems.map((item, i) => (
               <div
                 key={item.key}
-                className={`flex items-center justify-between py-3 ${i < notifItems.length - 1 ? 'border-b border-light-2 dark:border-white/5' : ''}`}
+                className={`flex items-center gap-4 py-3 ${i < notifItems.length - 1 ? 'border-b border-light-2 dark:border-white/5' : ''}`}
               >
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">{item.label}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">{item.desc}</p>
                 </div>

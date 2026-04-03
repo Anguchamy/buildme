@@ -2,6 +2,9 @@ import { Post } from '@/types'
 import StatusBadge from '@/components/common/StatusBadge'
 import PlatformIcon from '@/components/common/PlatformIcon'
 import { formatDate, truncate } from '@/utils/helpers'
+import AuthenticatedImage from '@/components/common/AuthenticatedImage'
+import { mediaApi } from '@/api/mediaApi'
+import { useWorkspaceStore } from '@/store/workspaceStore'
 
 interface Props {
   post: Post
@@ -9,16 +12,17 @@ interface Props {
 }
 
 export default function PostCard({ post, onClick }: Props) {
-  const thumbnail = post.mediaAssets[0]?.thumbnailUrl ?? post.mediaAssets[0]?.url
+  const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId)!
+  const firstAsset = post.mediaAssets[0]
 
   return (
     <div
       onClick={onClick}
       className="card cursor-pointer hover:border-white/20 transition-all duration-200 group"
     >
-      {thumbnail && (
+      {firstAsset && (
         <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-surface-3">
-          <img src={thumbnail} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <AuthenticatedImage src={mediaApi.getFileUrl(workspaceId, firstAsset.id)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         </div>
       )}
 

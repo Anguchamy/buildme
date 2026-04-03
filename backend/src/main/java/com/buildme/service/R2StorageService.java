@@ -2,12 +2,7 @@ package com.buildme.service;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.hc.client5.http.classic.methods.HttpDelete;
-import org.apache.hc.client5.http.classic.methods.HttpPut;
-import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
-import org.apache.hc.client5.http.impl.classic.HttpClients;
-import org.apache.hc.core5.http.ContentType;
-import org.apache.hc.core5.http.io.entity.ByteArrayEntity;
+import okhttp3.*;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -33,15 +28,13 @@ public class R2StorageService {
     @Value("${app.r2.public-url:}")  private String publicUrl;
 
     private boolean enabled;
-    private String endpoint;
-    private CloseableHttpClient httpClient;
+    private OkHttpClient httpClient;
 
     @PostConstruct
     public void init() {
         enabled = !accountId.isBlank() && !accessKey.isBlank() && !secretKey.isBlank();
         if (enabled) {
-            endpoint = "https://" + accountId + ".r2.cloudflarestorage.com";
-            httpClient = HttpClients.createDefault();
+            httpClient = new OkHttpClient();
             log.info("Cloudflare R2 enabled — bucket: {}", bucket);
         } else {
             log.info("R2 not configured — using local storage");
@@ -57,8 +50,56 @@ public class R2StorageService {
             String date     = now.format(D_FMT);
             String host     = accountId + ".r2.cloudflarestorage.com";
             String uri      = "/" + bucket + "/" + key;
-
             String payloadHash = sha256hex(bytes);
+
+            String canonicalHeaders =
+                "content-type:" + contentType + "\n" +
+                "host:" + host + "\n" +
+                "x-amz-content-sha256:" + payloadHash + "\n" +
+                "x-amz-date:" + datetime + "\n";
+            String signedHeaders = "content-type;host;x-amz-content-sha256;x-amz-date";
+
+            String canonicalRequest = "PUT\n" + uri + "\n\n" +
+                canonicalHeaders + "\n" + signedHeaders + "\n" + payloadHash;
+
+            String scope  = date + "/auto/s3/aws4_request";
+            String toSign = "AWS4-HMAC-SHA256\n" + datetime + "\n" + scope + "\n"
+                + sha256hex(canonicalRequest.getBytes(StandardCharsets.UTF_8));
+
+            String sig  = hmacHex(signingKey(secretKey, date), toSign);
+            String auth = "AWS4-HMAC-SHA256 Credential=" + accessKey + "/" + scope
+                + ", SignedHeaders=" + signedHeaders + ", Signature=" + sig;
+
+            Request request = new Request.Builder()
+                .url("https://" + host + uri)
+                .put(RequestBody.create(bytes, MediaType.parse(contentType)))
+                .header("x-amz-content-sha256", payloadHash)
+                .header("x-amz-date", datetime)
+                .header("Authorization", auth)
+                .build();
+
+            try (Response response = httpClient.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    String body = response.body() != null ? response.body().string() : "";
+                    throw new RuntimeException("R2 PUT failed HTTP " + response.code() + ": " + body);
+                }
+            }
+
+            log.info("Uploaded to R2: {} ({} bytes)", key, bytes.length);
+            return resolvePublicUrl(key);
+        } catch (Exception e) {
+            throw new RuntimeException("R2 upload error: " + e.getMessage(), e);
+        }
+    }
+
+    public byte[] getObject(String key) {
+        try {
+            ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+            String datetime = now.format(DT_FMT);
+            String date     = now.format(D_FMT);
+            String host     = accountId + ".r2.cloudflarestorage.com";
+            String uri      = "/" + bucket + "/" + key;
+            String payloadHash = sha256hex(new byte[0]);
 
             String canonicalHeaders =
                 "host:" + host + "\n" +
@@ -66,35 +107,33 @@ public class R2StorageService {
                 "x-amz-date:" + datetime + "\n";
             String signedHeaders = "host;x-amz-content-sha256;x-amz-date";
 
-            String canonicalRequest = "PUT\n" + uri + "\n\n" +
+            String canonicalRequest = "GET\n" + uri + "\n\n" +
                 canonicalHeaders + "\n" + signedHeaders + "\n" + payloadHash;
 
-            String scope = date + "/auto/s3/aws4_request";
+            String scope  = date + "/auto/s3/aws4_request";
             String toSign = "AWS4-HMAC-SHA256\n" + datetime + "\n" + scope + "\n"
                 + sha256hex(canonicalRequest.getBytes(StandardCharsets.UTF_8));
 
-            String sig = hmacHex(signingKey(secretKey, date), toSign);
+            String sig  = hmacHex(signingKey(secretKey, date), toSign);
             String auth = "AWS4-HMAC-SHA256 Credential=" + accessKey + "/" + scope
                 + ", SignedHeaders=" + signedHeaders + ", Signature=" + sig;
 
-            HttpPut put = new HttpPut(endpoint + uri);
-            put.setHeader("Host", host);
-            put.setHeader("x-amz-content-sha256", payloadHash);
-            put.setHeader("x-amz-date", datetime);
-            put.setHeader("Authorization", auth);
-            put.setEntity(new ByteArrayEntity(bytes, ContentType.parse(contentType)));
+            Request request = new Request.Builder()
+                .url("https://" + host + uri)
+                .get()
+                .header("x-amz-content-sha256", payloadHash)
+                .header("x-amz-date", datetime)
+                .header("Authorization", auth)
+                .build();
 
-            return httpClient.execute(put, response -> {
-                int code = response.getCode();
-                if (code < 200 || code >= 300) {
-                    String body = new String(response.getEntity().getContent().readAllBytes(), StandardCharsets.UTF_8);
-                    throw new RuntimeException("R2 PUT failed HTTP " + code + ": " + body);
+            try (Response response = httpClient.newCall(request).execute()) {
+                if (!response.isSuccessful()) {
+                    throw new RuntimeException("R2 GET failed HTTP " + response.code());
                 }
-                log.info("Uploaded to R2: {} ({} bytes)", key, bytes.length);
-                return resolvePublicUrl(key);
-            });
+                return response.body().bytes();
+            }
         } catch (Exception e) {
-            throw new RuntimeException("R2 upload error: " + e.getMessage(), e);
+            throw new RuntimeException("R2 get error: " + e.getMessage(), e);
         }
     }
 
@@ -105,28 +144,36 @@ public class R2StorageService {
             String date     = now.format(D_FMT);
             String host     = accountId + ".r2.cloudflarestorage.com";
             String uri      = "/" + bucket + "/" + key;
-
             String payloadHash = sha256hex(new byte[0]);
-            String canonicalHeaders = "host:" + host + "\nx-amz-content-sha256:" + payloadHash + "\nx-amz-date:" + datetime + "\n";
+
+            String canonicalHeaders =
+                "host:" + host + "\n" +
+                "x-amz-content-sha256:" + payloadHash + "\n" +
+                "x-amz-date:" + datetime + "\n";
             String signedHeaders = "host;x-amz-content-sha256;x-amz-date";
-            String canonicalRequest = "DELETE\n" + uri + "\n\n" + canonicalHeaders + "\n" + signedHeaders + "\n" + payloadHash;
+
+            String canonicalRequest = "DELETE\n" + uri + "\n\n" +
+                canonicalHeaders + "\n" + signedHeaders + "\n" + payloadHash;
+
             String scope  = date + "/auto/s3/aws4_request";
             String toSign = "AWS4-HMAC-SHA256\n" + datetime + "\n" + scope + "\n"
                 + sha256hex(canonicalRequest.getBytes(StandardCharsets.UTF_8));
-            String sig    = hmacHex(signingKey(secretKey, date), toSign);
-            String auth   = "AWS4-HMAC-SHA256 Credential=" + accessKey + "/" + scope
+
+            String sig  = hmacHex(signingKey(secretKey, date), toSign);
+            String auth = "AWS4-HMAC-SHA256 Credential=" + accessKey + "/" + scope
                 + ", SignedHeaders=" + signedHeaders + ", Signature=" + sig;
 
-            HttpDelete del = new HttpDelete(endpoint + uri);
-            del.setHeader("Host", host);
-            del.setHeader("x-amz-content-sha256", payloadHash);
-            del.setHeader("x-amz-date", datetime);
-            del.setHeader("Authorization", auth);
+            Request request = new Request.Builder()
+                .url("https://" + host + uri)
+                .delete()
+                .header("x-amz-content-sha256", payloadHash)
+                .header("x-amz-date", datetime)
+                .header("Authorization", auth)
+                .build();
 
-            httpClient.execute(del, response -> {
-                log.info("Deleted R2 object: {} (HTTP {})", key, response.getCode());
-                return null;
-            });
+            try (Response response = httpClient.newCall(request).execute()) {
+                log.info("Deleted R2 object: {} (HTTP {})", key, response.code());
+            }
         } catch (Exception e) {
             log.warn("Failed to delete R2 object {}: {}", key, e.getMessage());
         }
@@ -137,8 +184,6 @@ public class R2StorageService {
             return publicUrl.stripTrailing() + "/" + key;
         return "https://" + bucket + "." + accountId + ".r2.cloudflarestorage.com/" + key;
     }
-
-    // ── SigV4 helpers ──────────────────────────────────────────────────────────
 
     private static String sha256hex(byte[] data) throws Exception {
         return hex(MessageDigest.getInstance("SHA-256").digest(data));

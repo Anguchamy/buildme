@@ -1,24 +1,51 @@
 import { useState } from 'react'
-import { useMediaQuery, useUploadMedia, useDeleteMedia } from '@/hooks/useMedia'
+import { useMediaQuery, useDeleteMedia } from '@/hooks/useMedia'
+import { useQueryClient } from '@tanstack/react-query'
 import MediaGrid from '@/components/media/MediaGrid'
 import UploadZone from '@/components/media/UploadZone'
-import Button from '@/components/common/Button'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
+import AuthenticatedImage from '@/components/common/AuthenticatedImage'
+import { mediaApi } from '@/api/mediaApi'
+import { MediaAsset } from '@/types'
+import { useWorkspaceStore } from '@/store/workspaceStore'
 
 type Tab = 'my-files' | 'upload'
 
 export default function MediaLibrary() {
   const [tab, setTab] = useState<Tab>('my-files')
   const [deleteId, setDeleteId] = useState<number | null>(null)
+  const [preview, setPreview] = useState<MediaAsset | null>(null)
+  const [fileStatuses, setFileStatuses] = useState<Record<string, 'uploading' | 'success' | 'error'>>({})
+  const [isUploading, setIsUploading] = useState(false)
+  const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId)!
+  const queryClient = useQueryClient()
 
   const { data: assets = [], isLoading } = useMediaQuery()
-  const uploadMedia = useUploadMedia()
   const deleteMedia = useDeleteMedia()
 
   const tabs: { key: Tab; label: string }[] = [
     { key: 'my-files', label: '📁 My Files' },
     { key: 'upload', label: '⬆️ Upload' },
   ]
+
+  const handleUpload = (files: File[]) => {
+    setFileStatuses({})
+    const initial: Record<string, 'uploading' | 'success' | 'error'> = {}
+    files.forEach((f) => { initial[f.name] = 'uploading' })
+    setFileStatuses(initial)
+    setIsUploading(true)
+
+    const promises = files.map((f) =>
+      mediaApi.uploadDirect(workspaceId, f)
+        .then(() => setFileStatuses((prev) => ({ ...prev, [f.name]: 'success' })))
+        .catch(() => setFileStatuses((prev) => ({ ...prev, [f.name]: 'error' })))
+    )
+
+    Promise.all(promises).then(() => {
+      setIsUploading(false)
+      queryClient.invalidateQueries({ queryKey: ['media', workspaceId] })
+    })
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -53,7 +80,7 @@ export default function MediaLibrary() {
               ))}
             </div>
           ) : (
-            <MediaGrid assets={assets} onDelete={(id) => setDeleteId(id)} />
+            <MediaGrid assets={assets} onSelect={setPreview} onDelete={(id) => setDeleteId(id)} />
           )}
         </div>
       )}
@@ -61,12 +88,52 @@ export default function MediaLibrary() {
       {tab === 'upload' && (
         <div className="max-w-lg">
           <UploadZone
-            onDrop={(files) => files.forEach((f) => uploadMedia.mutate(f))}
-            isUploading={uploadMedia.isPending}
+            onDrop={handleUpload}
+            isUploading={isUploading}
           />
-          {uploadMedia.isSuccess && (
-            <p className="text-green-500 text-sm mt-3">Upload successful!</p>
+          {Object.keys(fileStatuses).length > 0 && (
+            <ul className="mt-4 space-y-1">
+              {Object.entries(fileStatuses).map(([name, status]) => (
+                <li key={name} className="flex items-center gap-2 text-sm">
+                  <span>{status === 'uploading' ? '⏳' : status === 'success' ? '✅' : '❌'}</span>
+                  <span className="truncate text-gray-300">{name}</span>
+                  <span className={status === 'success' ? 'text-green-400' : status === 'error' ? 'text-red-400' : 'text-gray-400'}>
+                    {status === 'uploading' ? 'Uploading...' : status === 'success' ? 'Done' : 'Failed'}
+                  </span>
+                </li>
+              ))}
+            </ul>
           )}
+        </div>
+      )}
+
+      {/* Image Preview Modal */}
+      {preview && (
+        <div
+          className="fixed inset-0 z-50 bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setPreview(null)}
+        >
+          <div className="relative max-w-4xl max-h-full" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => setPreview(null)}
+              className="absolute -top-8 right-0 text-white text-sm hover:text-gray-300"
+            >
+              ✕ Close
+            </button>
+            {preview.contentType?.startsWith('image/') ? (
+              <AuthenticatedImage
+                src={mediaApi.getFileUrl(workspaceId, preview.id)}
+                alt={preview.originalName}
+                className="max-h-[80vh] max-w-full rounded-lg object-contain"
+              />
+            ) : (
+              <div className="text-white text-center p-8">
+                <p className="text-4xl mb-2">🎬</p>
+                <p>{preview.originalName}</p>
+              </div>
+            )}
+            <p className="text-gray-400 text-xs text-center mt-2">{preview.originalName}</p>
+          </div>
         </div>
       )}
 

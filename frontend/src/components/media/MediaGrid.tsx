@@ -1,5 +1,8 @@
 import { MediaAsset } from '@/types'
 import { formatBytes } from '@/utils/helpers'
+import AuthenticatedImage from '@/components/common/AuthenticatedImage'
+import { mediaApi } from '@/api/mediaApi'
+import { useWorkspaceStore } from '@/store/workspaceStore'
 
 interface Props {
   assets: MediaAsset[]
@@ -9,6 +12,7 @@ interface Props {
 }
 
 export default function MediaGrid({ assets, onSelect, onDelete, selectedIds = [] }: Props) {
+  const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId)!
   if (assets.length === 0) {
     return (
       <div className="text-center py-12 text-gray-500">
@@ -33,8 +37,8 @@ export default function MediaGrid({ assets, onSelect, onDelete, selectedIds = []
               ${isSelected ? 'ring-2 ring-brand-500' : ''}`}
           >
             {isImage && (
-              <img
-                src={asset.thumbnailUrl ?? asset.url}
+              <AuthenticatedImage
+                src={mediaApi.getFileUrl(workspaceId, asset.id)}
                 alt={asset.originalName}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
               />

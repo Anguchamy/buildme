@@ -11,6 +11,9 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -46,6 +49,7 @@ public class MediaService {
         String storedName = UUID.randomUUID() + ext;
         String key = "workspaces/" + workspaceId + "/" + storedName;
         String contentType = file.getContentType() != null ? file.getContentType() : "application/octet-stream";
+        if ("image/jpg".equalsIgnoreCase(contentType)) contentType = "image/jpeg";
 
         String url;
 
@@ -110,6 +114,29 @@ public class MediaService {
         return toResponse(asset);
     }
 
+    public ResponseEntity<byte[]> getFile(Long workspaceId, Long assetId) {
+        MediaAsset asset = mediaAssetRepository.findById(assetId)
+            .orElseThrow(() -> new CustomExceptions.ResourceNotFoundException("MediaAsset", assetId));
+
+        byte[] data;
+        if (r2StorageService.isEnabled()) {
+            data = r2StorageService.getObject(asset.getS3Key());
+        } else {
+            try {
+                Path filePath = Paths.get(localUploadDir).resolve(asset.getS3Key());
+                data = java.nio.file.Files.readAllBytes(filePath);
+            } catch (IOException e) {
+                throw new CustomExceptions.ExternalApiException("Failed to read local file", e);
+            }
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(asset.getContentType()));
+        headers.setContentLength(data.length);
+        headers.set(HttpHeaders.CACHE_CONTROL, "max-age=3600");
+        return ResponseEntity.ok().headers(headers).body(data);
+    }
+
     @Transactional(readOnly = true)
     public List<MediaAssetResponse> findByWorkspace(Long workspaceId, int page, int size) {
         return mediaAssetRepository.findByWorkspaceIdOrderByCreatedAtDesc(
@@ -134,6 +161,7 @@ public class MediaService {
             }
         }
 
+        mediaAssetRepository.deletePostMediaReferences(assetId);
         mediaAssetRepository.delete(asset);
     }
 

@@ -20,9 +20,9 @@ export const useWorkspaceStore = create<WorkspaceState>()(
 
       setWorkspaces: (workspaces) => {
         set({ workspaces })
-        // Auto-select first workspace if none selected
         const { currentWorkspaceId } = get()
-        if (!currentWorkspaceId && workspaces.length > 0) {
+        const valid = workspaces.some((w) => w.id === currentWorkspaceId)
+        if ((!currentWorkspaceId || !valid) && workspaces.length > 0) {
           set({ currentWorkspaceId: workspaces[0].id })
         }
       },

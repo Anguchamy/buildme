@@ -29,6 +29,9 @@ export const mediaApi = {
       .get<MediaAsset[]>(`/workspaces/${workspaceId}/media`, { params: { page, size } })
       .then((r) => r.data),
 
+  getFileUrl: (workspaceId: number, assetId: number) =>
+    `/workspaces/${workspaceId}/media/${assetId}/file`,
+
   delete: (workspaceId: number, assetId: number) =>
     api.delete(`/workspaces/${workspaceId}/media/${assetId}`).then((r) => r.data),
 

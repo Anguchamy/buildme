@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -57,6 +59,15 @@ public class MediaController {
         @AuthenticationPrincipal User user
     ) {
         return ResponseEntity.ok(mediaService.confirmUpload(assetId, user.getId()));
+    }
+
+    @GetMapping("/{assetId}/file")
+    @Operation(summary = "Stream media file (proxied from R2)")
+    public ResponseEntity<byte[]> getFile(
+        @PathVariable Long workspaceId,
+        @PathVariable Long assetId
+    ) {
+        return mediaService.getFile(workspaceId, assetId);
     }
 
     @GetMapping

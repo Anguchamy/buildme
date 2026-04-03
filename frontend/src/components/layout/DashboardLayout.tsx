@@ -1,16 +1,23 @@
-import { lazy, Suspense } from 'react'
+import { lazy, Suspense, useEffect } from 'react'
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import TopBar from './TopBar'
 import Modal from '@/components/common/Modal'
 import { usePostStore } from '@/store/postStore'
 import LoadingSpinner from '@/components/common/LoadingSpinner'
+import { workspaceApi } from '@/api/workspaceApi'
+import { useWorkspaceStore } from '@/store/workspaceStore'
 
 const PostComposer = lazy(() => import('@/pages/PostComposer'))
 
 export default function DashboardLayout() {
   const isComposerOpen = usePostStore((s) => s.isComposerOpen)
   const closeComposer = usePostStore((s) => s.closeComposer)
+  const setWorkspaces = useWorkspaceStore((s) => s.setWorkspaces)
+
+  useEffect(() => {
+    workspaceApi.list().then(setWorkspaces).catch(() => {})
+  }, [])
 
   return (
     <div className="flex h-screen overflow-hidden bg-light-1 dark:bg-surface-0">

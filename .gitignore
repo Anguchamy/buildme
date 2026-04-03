@@ -50,3 +50,4 @@ frontend/node/
 dist/
 backend/src/main/resources/static/
 backend/target/
+backend/.idea/

@@ -1,15 +1,17 @@
-import { useState } from 'react'
-import { useMutation } from '@tanstack/react-query'
-import { useCreatePostMutation, useSchedulePostMutation } from '@/hooks/usePosts'
+import { useState, useEffect } from 'react'
+import { useCreatePostMutation, useUpdatePostMutation, usePostsQuery } from '@/hooks/usePosts'
 import { useUploadMedia } from '@/hooks/useMedia'
 import PlatformSelector from '@/components/post/PlatformSelector'
 import CaptionEditor from '@/components/post/CaptionEditor'
 import SchedulePicker from '@/components/post/SchedulePicker'
 import UploadZone from '@/components/media/UploadZone'
 import Button from '@/components/common/Button'
+import AuthenticatedImage from '@/components/common/AuthenticatedImage'
+import { mediaApi } from '@/api/mediaApi'
 import { Platform, PostStatus, MediaAsset } from '@/types'
 import { aiApi } from '@/api/aiApi'
 import { useWorkspaceStore } from '@/store/workspaceStore'
+import { usePostStore } from '@/store/postStore'
 import MediaGrid from '@/components/media/MediaGrid'
 import { useMediaQuery } from '@/hooks/useMedia'
 
@@ -19,6 +21,10 @@ interface PostComposerProps {
 
 export default function PostComposer({ onClose }: PostComposerProps = {}) {
   const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId)
+  const editingPostId = usePostStore((s) => s.editingPostId)
+  const { data: posts = [] } = usePostsQuery()
+  const editingPost = editingPostId ? posts.find((p) => p.id === editingPostId) : null
+
   const [caption, setCaption] = useState('')
   const [platforms, setPlatforms] = useState<Platform[]>([])
   const [scheduledAt, setScheduledAt] = useState<Date | undefined>()
@@ -27,7 +33,17 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
   const [aiLoading, setAiLoading] = useState(false)
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([])
 
+  useEffect(() => {
+    if (editingPost) {
+      setCaption(editingPost.caption ?? '')
+      setPlatforms((editingPost.platforms ?? []) as Platform[])
+      setScheduledAt(editingPost.scheduledAt ? new Date(editingPost.scheduledAt) : undefined)
+      setSelectedAssets(editingPost.mediaAssets ?? [])
+    }
+  }, [editingPost?.id])
+
   const createPost = useCreatePostMutation({ onSuccess: onClose })
+  const updatePost = useUpdatePostMutation()
   const uploadMedia = useUploadMedia()
   const { data: mediaAssets = [] } = useMediaQuery()
 
@@ -50,32 +66,31 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
   }
 
   const handleDraft = () => {
-    createPost.mutate({
-      caption,
-      platforms: platforms,
-      status: PostStatus.DRAFT,
-      mediaAssetIds: selectedAssets.map((a) => a.id),
-    })
+    const data = { caption, platforms, status: PostStatus.DRAFT, mediaAssetIds: selectedAssets.map((a) => a.id) }
+    if (editingPostId) {
+      updatePost.mutate({ postId: editingPostId, data }, { onSuccess: onClose })
+    } else {
+      createPost.mutate(data)
+    }
   }
 
   const handleSchedule = () => {
     if (!scheduledAt) return
-    createPost.mutate({
-      caption,
-      platforms: platforms,
-      status: PostStatus.SCHEDULED,
-      scheduledAt: scheduledAt.toISOString(),
-      mediaAssetIds: selectedAssets.map((a) => a.id),
-    })
+    const data = { caption, platforms, status: PostStatus.SCHEDULED, scheduledAt: scheduledAt.toISOString(), mediaAssetIds: selectedAssets.map((a) => a.id) }
+    if (editingPostId) {
+      updatePost.mutate({ postId: editingPostId, data }, { onSuccess: onClose })
+    } else {
+      createPost.mutate(data)
+    }
   }
 
   const handlePostNow = () => {
-    createPost.mutate({
-      caption,
-      platforms: platforms,
-      status: PostStatus.PUBLISHED,
-      mediaAssetIds: selectedAssets.map((a) => a.id),
-    })
+    const data = { caption, platforms, status: PostStatus.PUBLISHED, mediaAssetIds: selectedAssets.map((a) => a.id) }
+    if (editingPostId) {
+      updatePost.mutate({ postId: editingPostId, data }, { onSuccess: onClose })
+    } else {
+      createPost.mutate(data)
+    }
   }
 
   const toggleAsset = (asset: MediaAsset) => {
@@ -90,8 +105,12 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
     <div className="space-y-6">
       {!onClose && (
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Compose Post</h1>
-          <p className="text-gray-400 text-sm mt-1">Create content for multiple platforms at once</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+            {editingPost ? 'Edit Post' : 'Compose Post'}
+          </h1>
+          <p className="text-gray-400 text-sm mt-1">
+            {editingPost ? 'Update your post details' : 'Create content for multiple platforms at once'}
+          </p>
         </div>
       )}
 
@@ -198,7 +217,7 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
               <div className="flex flex-wrap gap-2">
                 {selectedAssets.map((a) => (
                   <div key={a.id} className="relative w-12 h-12 rounded overflow-hidden">
-                    <img src={a.thumbnailUrl ?? a.url} alt="" className="w-full h-full object-cover" />
+                    <AuthenticatedImage src={mediaApi.getFileUrl(workspaceId!, a.id)} alt="" className="w-full h-full object-cover" />
                     <button
                       onClick={() => toggleAsset(a)}
                       className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xs"
