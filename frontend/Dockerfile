@@ -36,11 +36,14 @@ RUN printf 'server {\n\
     add_header X-XSS-Protection "1; mode=block";\n\
     add_header X-Content-Type-Options "nosniff";\n\
 \n\
+    large_client_header_buffers 4 64k;\n\
+\n\
     location /api/ {\n\
         proxy_pass $BACKEND_URL;\n\
         proxy_set_header Host $host;\n\
         proxy_set_header X-Real-IP $remote_addr;\n\
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
+        proxy_set_header X-Forwarded-For $remote_addr;\n\
+        proxy_set_header X-Forwarded-Host $host;\n\
         proxy_set_header X-Forwarded-Proto $scheme;\n\
         proxy_read_timeout 90;\n\
         proxy_buffer_size 128k;\n\
