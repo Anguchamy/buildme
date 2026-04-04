@@ -1,7 +1,9 @@
 import axios, { AxiosInstance, InternalAxiosRequestConfig, AxiosResponse } from 'axios'
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api'
+
 const api: AxiosInstance = axios.create({
-  baseURL: '/api',
+  baseURL: API_BASE,
   headers: { 'Content-Type': 'application/json' },
   timeout: 15000,
 })
@@ -61,7 +63,7 @@ api.interceptors.response.use(
       }
 
       try {
-        const response = await axios.post('/api/auth/refresh', null, {
+        const response = await axios.post(`${API_BASE}/auth/refresh`, null, {
           headers: { 'X-Refresh-Token': refreshToken },
         })
 
