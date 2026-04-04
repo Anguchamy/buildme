@@ -37,6 +37,7 @@ RUN printf 'server {\n\
     add_header X-Content-Type-Options "nosniff";\n\
 \n\
     large_client_header_buffers 4 64k;\n\
+    client_max_body_size 52m;\n\
 \n\
     location /api/ {\n\
         proxy_pass $BACKEND_URL;\n\
