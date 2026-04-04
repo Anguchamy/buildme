@@ -43,6 +43,9 @@ RUN printf 'server {\n\
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\n\
         proxy_set_header X-Forwarded-Proto $scheme;\n\
         proxy_read_timeout 90;\n\
+        proxy_buffer_size 128k;\n\
+        proxy_buffers 4 256k;\n\
+        proxy_busy_buffers_size 256k;\n\
     }\n\
 \n\
     location ~* \\.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {\n\
