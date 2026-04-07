@@ -40,9 +40,7 @@ RUN printf 'server {\n\
     client_max_body_size 52m;\n\
 \n\
     location /api/ {\n\
-        resolver 8.8.8.8 valid=10s ipv6=off;\n\
-        set $backend $BACKEND_URL;\n\
-        proxy_pass $backend$uri$is_args$args;\n\
+        proxy_pass ${BACKEND_URL};\n\
         proxy_set_header Host $host;\n\
         proxy_set_header X-Real-IP $remote_addr;\n\
         proxy_set_header X-Forwarded-For $remote_addr;\n\
