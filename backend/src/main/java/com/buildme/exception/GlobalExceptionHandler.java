@@ -67,6 +67,12 @@ public class GlobalExceptionHandler {
             .body(new ErrorResponse(401, "Unauthorized", ex.getMessage()));
     }
 
+    @ExceptionHandler(CustomExceptions.EmailNotVerifiedException.class)
+    public ResponseEntity<ErrorResponse> handleEmailNotVerified(CustomExceptions.EmailNotVerifiedException ex) {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+            .body(new ErrorResponse(403, "Email Not Verified", ex.getMessage()));
+    }
+
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentials(BadCredentialsException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
