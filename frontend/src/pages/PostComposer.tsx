@@ -14,6 +14,17 @@ import { useWorkspaceStore } from '@/store/workspaceStore'
 import { usePostStore } from '@/store/postStore'
 import MediaGrid from '@/components/media/MediaGrid'
 import { useMediaQuery } from '@/hooks/useMedia'
+import { getPlatformColor, getPlatformIcon } from '@/utils/helpers'
+
+const PLATFORM_CHAR_LIMITS: Record<Platform, number> = {
+  [Platform.TWITTER]: 280,
+  [Platform.INSTAGRAM]: 2200,
+  [Platform.FACEBOOK]: 63206,
+  [Platform.LINKEDIN]: 3000,
+  [Platform.TIKTOK]: 2200,
+  [Platform.YOUTUBE]: 5000,
+  [Platform.PINTEREST]: 500,
+}
 
 interface PostComposerProps {
   onClose?: () => void
@@ -32,6 +43,7 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
   const [activeTab, setActiveTab] = useState<'upload' | 'library'>('upload')
   const [aiLoading, setAiLoading] = useState(false)
   const [aiSuggestions, setAiSuggestions] = useState<string[]>([])
+  const [showSuccess, setShowSuccess] = useState(false)
 
   useEffect(() => {
     if (editingPost) {
@@ -42,7 +54,12 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
     }
   }, [editingPost?.id])
 
-  const createPost = useCreatePostMutation({ onSuccess: onClose })
+  const createPost = useCreatePostMutation({
+    onSuccess: () => {
+      setShowSuccess(true)
+      setTimeout(() => { setShowSuccess(false); onClose?.() }, 1500)
+    }
+  })
   const updatePost = useUpdatePostMutation()
   const uploadMedia = useUploadMedia()
   const { data: mediaAssets = [] } = useMediaQuery()
@@ -101,11 +118,20 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
     )
   }
 
+  // Find most restrictive character limit
+  const strictestLimit = platforms.length > 0
+    ? Math.min(...platforms.map((p) => PLATFORM_CHAR_LIMITS[p]))
+    : null
+
+  const charCount = caption.length
+  const charPercent = strictestLimit ? Math.min(100, (charCount / strictestLimit) * 100) : 0
+  const isOverLimit = strictestLimit !== null && charCount > strictestLimit
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {!onClose && (
         <div>
-          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
             {editingPost ? 'Edit Post' : 'Compose Post'}
           </h1>
           <p className="text-gray-400 text-sm mt-1">
@@ -114,34 +140,94 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
         </div>
       )}
 
+      {showSuccess && (
+        <div className="flex items-center gap-3 rounded-2xl bg-success-500/10 border border-success-500/30 text-success-500 px-4 py-3 text-sm animate-slide-up">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+          Post saved successfully!
+        </div>
+      )}
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Left: Composer */}
         <div className="space-y-5">
           {/* Platform Selector */}
           <div>
-            <label className="label">Platforms</label>
+            <label className="label">Target Platforms</label>
             <PlatformSelector selected={platforms} onChange={setPlatforms} />
           </div>
 
+          {/* Character limits per platform */}
+          {platforms.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {platforms.map((p) => {
+                const limit = PLATFORM_CHAR_LIMITS[p]
+                const over = charCount > limit
+                return (
+                  <div
+                    key={p}
+                    className={`flex items-center gap-1.5 px-2 py-1 rounded-lg text-[10px] font-semibold border ${
+                      over
+                        ? 'bg-red-500/10 border-red-500/30 text-red-500'
+                        : 'bg-light-2 dark:bg-surface-3 border-light-3 dark:border-white/10 text-gray-500 dark:text-gray-400'
+                    }`}
+                  >
+                    <span>{getPlatformIcon(p)}</span>
+                    <span>{charCount}/{limit}</span>
+                    {over && <span>over!</span>}
+                  </div>
+                )
+              })}
+            </div>
+          )}
+
           {/* Caption */}
-          <CaptionEditor
-            value={caption}
-            onChange={setCaption}
-            activePlatforms={platforms}
-            onGenerateAI={handleGenerateAI}
-          />
+          <div>
+            <CaptionEditor
+              value={caption}
+              onChange={setCaption}
+              activePlatforms={platforms}
+              onGenerateAI={handleGenerateAI}
+            />
+            {strictestLimit && (
+              <div className="mt-2 flex items-center gap-2">
+                <div className="flex-1 bg-light-3 dark:bg-surface-4 rounded-full h-1">
+                  <div
+                    className={`h-1 rounded-full transition-all ${
+                      isOverLimit ? 'bg-red-500' : charPercent > 80 ? 'bg-orange-500' : 'bg-brand-500'
+                    }`}
+                    style={{ width: `${charPercent}%` }}
+                  />
+                </div>
+                <span className={`text-xs tabular-nums ${isOverLimit ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                  {strictestLimit - charCount} left
+                </span>
+              </div>
+            )}
+          </div>
 
           {/* AI Suggestions */}
-          {aiLoading && <p className="text-sm text-brand-400 animate-pulse">✨ Generating captions...</p>}
+          {aiLoading && (
+            <div className="flex items-center gap-2 text-sm text-brand-400">
+              <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"/>
+              </svg>
+              Generating AI captions...
+            </div>
+          )}
           {aiSuggestions.length > 0 && (
             <div className="space-y-2">
-              <p className="text-xs text-gray-400 font-medium">AI Suggestions (click to use)</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">AI Suggestions</p>
+                <button onClick={() => setAiSuggestions([])} className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-white">Clear</button>
+              </div>
               {aiSuggestions.map((s, i) => (
                 <button
                   key={i}
-                  onClick={() => setCaption(s)}
-                  className="w-full text-left text-sm text-gray-300 bg-surface-3 hover:bg-surface-4
-                             border border-white/5 rounded-lg p-3 transition-colors"
+                  onClick={() => { setCaption(s); setAiSuggestions([]) }}
+                  className="w-full text-left text-sm text-gray-700 dark:text-gray-300 bg-brand-500/5 hover:bg-brand-500/10 border border-brand-500/15 hover:border-brand-500/30 rounded-xl p-3.5 transition-all leading-relaxed"
                 >
                   {s}
                 </button>
@@ -153,79 +239,162 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
           <SchedulePicker value={scheduledAt} onChange={setScheduledAt} />
 
           {/* Actions */}
-          <div className="flex gap-3">
-            <Button variant="secondary" onClick={handleDraft} loading={createPost.isPending}>
+          <div className="flex flex-wrap gap-2 pt-1">
+            <Button
+              variant="secondary"
+              onClick={handleDraft}
+              loading={createPost.isPending}
+              leftIcon={
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/>
+                </svg>
+              }
+            >
               Save Draft
             </Button>
             <Button
+              variant="gradient"
               onClick={handleSchedule}
-              disabled={!scheduledAt || platforms.length === 0}
+              disabled={!scheduledAt || platforms.length === 0 || isOverLimit}
               loading={createPost.isPending}
+              leftIcon={
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                </svg>
+              }
             >
               Schedule
             </Button>
             <Button
-              variant="ghost"
+              variant="secondary"
               onClick={handlePostNow}
-              disabled={platforms.length === 0}
+              disabled={platforms.length === 0 || isOverLimit}
               loading={createPost.isPending}
             >
               Post Now
             </Button>
           </div>
 
-          {createPost.isSuccess && (
-            <p className="text-green-400 text-sm">Post created successfully!</p>
+          {isOverLimit && (
+            <p className="text-xs text-red-500 font-medium">
+              Caption exceeds the character limit for one or more selected platforms.
+            </p>
           )}
         </div>
 
         {/* Right: Media */}
         <div className="space-y-4">
-          <div className="flex gap-2">
-            <button
-              onClick={() => setActiveTab('upload')}
-              className={`text-sm px-3 py-1.5 rounded-lg ${activeTab === 'upload' ? 'bg-brand-500 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
-            >
-              Upload
-            </button>
-            <button
-              onClick={() => setActiveTab('library')}
-              className={`text-sm px-3 py-1.5 rounded-lg ${activeTab === 'library' ? 'bg-brand-500 text-white font-medium' : 'text-gray-400 hover:text-white'}`}
-            >
-              Library ({mediaAssets.length})
-            </button>
+          <div>
+            <label className="label">Media</label>
+            <div className="flex gap-1 bg-light-2 dark:bg-surface-2 rounded-xl p-1 mb-3">
+              <button
+                onClick={() => setActiveTab('upload')}
+                className={`flex-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
+                  activeTab === 'upload'
+                    ? 'bg-white dark:bg-surface-4 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                Upload New
+              </button>
+              <button
+                onClick={() => setActiveTab('library')}
+                className={`flex-1 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all ${
+                  activeTab === 'library'
+                    ? 'bg-white dark:bg-surface-4 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-500 dark:text-gray-400'
+                }`}
+              >
+                Library ({mediaAssets.length})
+              </button>
+            </div>
+
+            {activeTab === 'upload' && (
+              <UploadZone
+                onDrop={(files) => files.forEach((f) => uploadMedia.mutate(f))}
+                isUploading={uploadMedia.isPending}
+              />
+            )}
+
+            {activeTab === 'library' && (
+              <MediaGrid
+                assets={mediaAssets}
+                onSelect={toggleAsset}
+                selectedIds={selectedAssets.map((a) => a.id)}
+              />
+            )}
           </div>
-
-          {activeTab === 'upload' && (
-            <UploadZone
-              onDrop={(files) => files.forEach((f) => uploadMedia.mutate(f))}
-              isUploading={uploadMedia.isPending}
-            />
-          )}
-
-          {activeTab === 'library' && (
-            <MediaGrid
-              assets={mediaAssets}
-              onSelect={toggleAsset}
-              selectedIds={selectedAssets.map((a) => a.id)}
-            />
-          )}
 
           {selectedAssets.length > 0 && (
             <div>
-              <p className="text-xs text-gray-400 mb-2">Selected ({selectedAssets.length})</p>
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                  Selected ({selectedAssets.length})
+                </p>
+                <button
+                  onClick={() => setSelectedAssets([])}
+                  className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-white"
+                >
+                  Clear all
+                </button>
+              </div>
               <div className="flex flex-wrap gap-2">
                 {selectedAssets.map((a) => (
-                  <div key={a.id} className="relative w-12 h-12 rounded overflow-hidden">
-                    <AuthenticatedImage src={mediaApi.getFileUrl(workspaceId!, a.id)} alt="" className="w-full h-full object-cover" />
+                  <div key={a.id} className="relative w-14 h-14 rounded-xl overflow-hidden group">
+                    {a.contentType?.startsWith('video/') ? (
+                      <div className="w-full h-full bg-surface-3 flex items-center justify-center text-xl">🎬</div>
+                    ) : (
+                      <AuthenticatedImage
+                        src={mediaApi.getFileUrl(workspaceId!, a.id)}
+                        alt=""
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                     <button
                       onClick={() => toggleAsset(a)}
-                      className="absolute inset-0 bg-black/50 flex items-center justify-center text-white text-xs"
+                      className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex items-center justify-center text-white text-lg transition-opacity"
                     >
                       ×
                     </button>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Post preview hint */}
+          {platforms.length > 0 && caption && (
+            <div className="card bg-light-1 dark:bg-surface-3 border-dashed">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-3">Preview</p>
+              <div className="space-y-2">
+                {platforms.slice(0, 2).map((p) => {
+                  const limit = PLATFORM_CHAR_LIMITS[p]
+                  const truncated = caption.length > 120 ? caption.slice(0, 120) + '...' : caption
+                  return (
+                    <div key={p} className="flex items-start gap-2.5 p-3 bg-white dark:bg-surface-2 rounded-xl border border-light-3 dark:border-white/8">
+                      <span
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-sm flex-shrink-0"
+                        style={{ backgroundColor: getPlatformColor(p) + '20' }}
+                      >
+                        {getPlatformIcon(p)}
+                      </span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-xs text-gray-700 dark:text-gray-300 leading-relaxed break-words">{truncated}</p>
+                        <div className="flex items-center justify-between mt-1.5">
+                          <span className="text-[10px] text-gray-400 capitalize">
+                            {p.charAt(0) + p.slice(1).toLowerCase()}
+                          </span>
+                          <span className={`text-[10px] ${caption.length > limit ? 'text-red-500 font-semibold' : 'text-gray-400'}`}>
+                            {caption.length}/{limit}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+                {platforms.length > 2 && (
+                  <p className="text-xs text-gray-400 text-center">+{platforms.length - 2} more platforms</p>
+                )}
               </div>
             </div>
           )}

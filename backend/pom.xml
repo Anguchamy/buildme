@@ -126,11 +126,11 @@
             <scope>provided</scope>
         </dependency>
 
-        <!-- Razorpay -->
+        <!-- Stripe -->
         <dependency>
-            <groupId>com.razorpay</groupId>
-            <artifactId>razorpay-java</artifactId>
-            <version>1.4.5</version>
+            <groupId>com.stripe</groupId>
+            <artifactId>stripe-java</artifactId>
+            <version>26.3.0</version>
         </dependency>
 
         <!-- Apache HttpClient5 -->

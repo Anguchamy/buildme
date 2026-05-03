@@ -8,7 +8,6 @@ import com.buildme.service.SubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -31,30 +30,31 @@ public class SubscriptionController {
         return ResponseEntity.ok(subscriptionService.getSubscription(workspaceId));
     }
 
+    /**
+     * Creates a Stripe Checkout Session and returns sessionId + publishableKey + url.
+     * Frontend redirects to the Stripe-hosted checkout page.
+     */
     @PostMapping("/api/subscriptions/initiate")
-    @Operation(summary = "Initiate subscription upgrade — returns Razorpay subscription ID")
+    @Operation(summary = "Create Stripe Checkout Session for plan upgrade")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<Map<String, String>> initiateUpgrade(
+    public ResponseEntity<Map<String, Object>> initiateUpgrade(
         @Valid @RequestBody CreateSubscriptionRequest request,
         @AuthenticationPrincipal User user
     ) {
-        Map<String, String> result = subscriptionService.initiateUpgrade(
-            request.workspaceId(), request.planType()
-        );
-        return ResponseEntity.ok(result);
+        return ResponseEntity.ok(subscriptionService.initiateUpgrade(request.workspaceId(), request.planType()));
     }
 
+    /**
+     * Verifies the completed Stripe Checkout Session and activates the plan.
+     * Called after Stripe redirects back to success URL with ?session_id=cs_xxx
+     */
     @PostMapping("/api/subscriptions/verify")
-    @Operation(summary = "Verify Razorpay payment and activate subscription")
+    @Operation(summary = "Verify Stripe session and activate subscription")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<SubscriptionResponse> verifyPayment(
         @Valid @RequestBody VerifyPaymentRequest request
     ) {
-        return ResponseEntity.ok(subscriptionService.verifyAndActivate(
-            request.razorpayPaymentId(),
-            request.razorpaySubscriptionId(),
-            request.razorpaySignature()
-        ));
+        return ResponseEntity.ok(subscriptionService.verifyAndActivate(request.sessionId()));
     }
 
     @PostMapping("/api/subscriptions/{workspaceId}/cancel")
@@ -62,17 +62,5 @@ public class SubscriptionController {
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<SubscriptionResponse> cancelSubscription(@PathVariable Long workspaceId) {
         return ResponseEntity.ok(subscriptionService.cancelSubscription(workspaceId));
-    }
-
-    // Razorpay webhook — PUBLIC, verified by signature
-    @PostMapping("/api/razorpay/webhook")
-    @Operation(summary = "Razorpay webhook endpoint (public)")
-    public ResponseEntity<Void> webhook(
-        HttpServletRequest request,
-        @RequestBody String rawBody
-    ) {
-        String signature = request.getHeader("X-Razorpay-Signature");
-        subscriptionService.handleWebhook(rawBody, signature);
-        return ResponseEntity.ok().build();
     }
 }

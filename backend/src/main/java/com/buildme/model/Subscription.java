@@ -59,14 +59,11 @@ public class Subscription {
     @Builder.Default
     private Integer postsUsedThisMonth = 0;
 
-    @Column(name = "razorpay_subscription_id")
-    private String razorpaySubscriptionId;
+    @Column(name = "stripe_session_id")
+    private String stripeSessionId;
 
-    @Column(name = "razorpay_payment_id")
-    private String razorpayPaymentId;
-
-    @Column(name = "razorpay_order_id")
-    private String razorpayOrderId;
+    @Column(name = "stripe_payment_intent_id")
+    private String stripePaymentIntentId;
 
     @Column(name = "created_at")
     @Builder.Default

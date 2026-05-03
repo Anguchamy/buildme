@@ -22,7 +22,7 @@ public class LinkedInService implements SocialMediaService {
     @Value("${app.oauth.linkedin.client-secret:}")
     private String clientSecret;
 
-    @Value("${app.oauth.linkedin.redirect-uri:http://localhost:8080/api/integrations/linkedin/callback}")
+    @Value("${app.oauth.linkedin.redirect-uri:}")
     private String redirectUri;
 
     @Override
@@ -43,7 +43,7 @@ public class LinkedInService implements SocialMediaService {
             + "?response_type=code"
             + "&client_id=" + clientId
             + "&redirect_uri=" + redirectUri
-            + "&scope=r_liteprofile+w_member_social"
+            + "&scope=openid+profile+email+w_member_social"
             + "&state=" + state + ":" + workspaceId;
     }
 

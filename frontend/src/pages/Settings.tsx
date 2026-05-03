@@ -11,11 +11,6 @@ import { mediaApi } from '@/api/mediaApi'
 
 type Tab = 'profile' | 'workspace' | 'subscription' | 'notifications'
 
-declare global {
-  interface Window {
-    Razorpay: new (options: Record<string, unknown>) => { open(): void }
-  }
-}
 
 const FREE_LIMIT = 10
 const NOTIF_KEY = 'buildme-notifications'
@@ -109,37 +104,12 @@ export default function Settings() {
 
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null)
 
-  const openRazorpay = async (planType: string) => {
+  const openStripeCheckout = async (planType: string) => {
     if (!currentWorkspaceId) return
     setUpgradingPlan(planType)
     try {
-      const { razorpaySubscriptionId, keyId } = await subscriptionApi.initiateUpgrade(currentWorkspaceId, planType)
-      if (!window.Razorpay) {
-        await new Promise<void>((resolve, reject) => {
-          const s = document.createElement('script')
-          s.src = 'https://checkout.razorpay.com/v1/checkout.js'
-          s.onload = () => resolve()
-          s.onerror = () => reject(new Error('Failed to load Razorpay'))
-          document.head.appendChild(s)
-        })
-      }
-      new window.Razorpay({
-        key: keyId,
-        subscription_id: razorpaySubscriptionId,
-        name: 'build.me',
-        description: `${planType === 'PRO' ? 'Pro' : 'Agency'} Plan`,
-        prefill: { email: user?.email, name: user?.fullName },
-        theme: { color: '#6366f1' },
-        handler: async (res: { razorpay_payment_id: string; razorpay_subscription_id: string; razorpay_signature: string }) => {
-          await subscriptionApi.verifyPayment({
-            razorpayPaymentId: res.razorpay_payment_id,
-            razorpaySubscriptionId: res.razorpay_subscription_id,
-            razorpaySignature: res.razorpay_signature,
-          })
-          queryClient.invalidateQueries({ queryKey: ['subscription', currentWorkspaceId] })
-          setUpgradingPlan(null)
-        },
-      }).open()
+      const { url } = await subscriptionApi.initiateUpgrade(currentWorkspaceId, planType)
+      window.location.href = url
     } catch (e) {
       console.error('Upgrade failed:', e)
       setUpgradingPlan(null)
@@ -352,27 +322,27 @@ export default function Settings() {
                   <p className="font-bold text-gray-900 dark:text-white">Pro</p>
                   <span className="text-xs bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded-full font-medium">Popular</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">₹499<span className="text-sm font-normal text-gray-400">/mo</span></p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">$19<span className="text-sm font-normal text-gray-400">/mo</span></p>
                 <ul className="mt-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> Unlimited posts</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> All 7 platforms</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> AI captions</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> 3 team seats</li>
                 </ul>
-                <Button className="mt-4 w-full justify-center" size="sm" onClick={() => openRazorpay('PRO')} loading={upgradingPlan === 'PRO'}>
+                <Button className="mt-4 w-full justify-center" size="sm" onClick={() => openStripeCheckout('PRO')} loading={upgradingPlan === 'PRO'}>
                   Upgrade to Pro
                 </Button>
               </div>
               <div className="card hover:border-light-4 dark:hover:border-white/20 transition-colors">
                 <p className="font-bold text-gray-900 dark:text-white mb-2">Agency</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">₹1,499<span className="text-sm font-normal text-gray-400">/mo</span></p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">$49<span className="text-sm font-normal text-gray-400">/mo</span></p>
                 <ul className="mt-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> Unlimited workspaces</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> 10 team seats</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> White-label reports</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> Priority support</li>
                 </ul>
-                <Button variant="secondary" className="mt-4 w-full justify-center" size="sm" onClick={() => openRazorpay('AGENCY')} loading={upgradingPlan === 'AGENCY'}>
+                <Button variant="secondary" className="mt-4 w-full justify-center" size="sm" onClick={() => openStripeCheckout('AGENCY')} loading={upgradingPlan === 'AGENCY'}>
                   Upgrade to Agency
                 </Button>
               </div>

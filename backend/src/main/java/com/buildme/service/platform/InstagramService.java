@@ -70,10 +70,11 @@ public class InstagramService implements SocialMediaService {
 
     @Override
     public String getOAuthUrl(Long workspaceId, String state) {
-        return "https://api.instagram.com/oauth/authorize"
+        // Instagram Graph API now uses Facebook OAuth login
+        return "https://www.facebook.com/v19.0/dialog/oauth"
             + "?client_id=" + clientId
             + "&redirect_uri=" + redirectUri
-            + "&scope=user_profile,user_media,instagram_content_publish"
+            + "&scope=instagram_basic,instagram_content_publish,pages_read_engagement"
             + "&response_type=code"
             + "&state=" + state + ":" + workspaceId;
     }
@@ -87,7 +88,7 @@ public class InstagramService implements SocialMediaService {
         }
 
         try (CloseableHttpClient http = HttpClients.createDefault()) {
-            // 1. Exchange code for short-lived access token
+            // 1. Exchange code for short-lived Instagram token
             HttpPost tokenRequest = new HttpPost("https://api.instagram.com/oauth/access_token");
             List<NameValuePair> params = List.of(
                 new BasicNameValuePair("client_id", clientId),
@@ -100,15 +101,16 @@ public class InstagramService implements SocialMediaService {
             String tokenJson = http.execute(tokenRequest, r -> EntityUtils.toString(r.getEntity()));
             JsonNode tokenNode = objectMapper.readTree(tokenJson);
 
-            if (tokenNode.has("error_type")) {
+            if (tokenNode.has("error_type") || tokenNode.has("error")) {
                 throw new CustomExceptions.ExternalApiException(
-                    "Instagram token exchange failed: " + tokenNode.path("error_message").asText());
+                    "Instagram token exchange failed: " + tokenNode.path("error_message").asText(
+                        tokenNode.path("error").path("message").asText("unknown error")));
             }
 
             String shortToken = tokenNode.path("access_token").asText();
             String igUserId = tokenNode.path("user_id").asText();
 
-            // 2. Exchange for long-lived token
+            // 2. Exchange for long-lived token (60 days)
             HttpGet longTokenRequest = new HttpGet(
                 "https://graph.instagram.com/access_token"
                 + "?grant_type=ig_exchange_token"
@@ -118,16 +120,16 @@ public class InstagramService implements SocialMediaService {
             String longTokenJson = http.execute(longTokenRequest, r -> EntityUtils.toString(r.getEntity()));
             JsonNode longTokenNode = objectMapper.readTree(longTokenJson);
             String longToken = longTokenNode.path("access_token").asText();
-            long expiresIn = longTokenNode.path("expires_in").asLong(5184000); // 60 days default
+            long expiresIn = longTokenNode.path("expires_in").asLong(5184000);
 
-            // 3. Fetch user profile
+            // 3. Fetch Instagram profile info
             HttpGet profileRequest = new HttpGet(
                 "https://graph.instagram.com/me?fields=id,username,name&access_token=" + longToken
             );
             String profileJson = http.execute(profileRequest, r -> EntityUtils.toString(r.getEntity()));
             JsonNode profile = objectMapper.readTree(profileJson);
-            String username = profile.path("username").asText(igUserId);
-            String displayName = profile.path("name").asText(username);
+            String igUsername = profile.path("username").asText(igUserId);
+            String displayName = profile.path("name").asText(igUsername);
 
             // 4. Save or update SocialAccount
             Workspace workspace = workspaceRepository.findById(workspaceId)
@@ -144,15 +146,15 @@ public class InstagramService implements SocialMediaService {
                 .build());
 
             account.setAccountId(igUserId);
-            account.setHandle(username);
+            account.setHandle(igUsername);
             account.setDisplayName(displayName);
             account.setAccessToken(longToken);
             account.setConnected(true);
             account.setTokenExpiresAt(OffsetDateTime.now().plusSeconds(expiresIn));
-            account.setScopes("user_profile,user_media,instagram_content_publish");
+            account.setScopes("instagram_business_basic,instagram_manage_comments,instagram_business_manage_messages");
 
             socialAccountRepository.save(account);
-            log.info("Instagram account @{} connected for workspace {}", username, workspaceId);
+            log.info("Instagram Business account @{} connected for workspace {}", igUsername, workspaceId);
 
         } catch (CustomExceptions.ExternalApiException e) {
             throw e;

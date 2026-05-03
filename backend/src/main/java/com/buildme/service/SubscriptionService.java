@@ -7,9 +7,9 @@ import com.buildme.model.Subscription;
 import com.buildme.model.Workspace;
 import com.buildme.repository.SubscriptionRepository;
 import com.buildme.repository.WorkspaceRepository;
+import com.stripe.model.checkout.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.json.JSONObject;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,125 +23,68 @@ public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
     private final WorkspaceRepository workspaceRepository;
-    private final RazorpayService razorpayService;
+    private final StripeService stripeService;
 
     @Transactional
     public SubscriptionResponse getSubscription(Long workspaceId) {
-        Subscription sub = getOrCreate(workspaceId);
-        return toResponse(sub);
+        return toResponse(getOrCreate(workspaceId));
     }
 
     /**
-     * Initiates an upgrade: creates a Razorpay subscription and returns the subscription ID + key.
+     * Creates a Stripe Checkout Session for the plan upgrade.
+     * Returns: sessionId, publishableKey, url.
      */
     @Transactional
-    public Map<String, String> initiateUpgrade(Long workspaceId, String planType) {
+    public Map<String, Object> initiateUpgrade(Long workspaceId, String planType) {
         validatePlanType(planType);
         Subscription sub = getOrCreate(workspaceId);
-
-        String razorpaySubId = razorpayService.createSubscription(planType);
-        sub.setRazorpaySubscriptionId(razorpaySubId);
         sub.setStatus("PENDING");
-        sub.setPaymentProvider("RAZORPAY");
-        // Pre-set the plan so verifyAndActivate can see it
-        PlanType pt = PlanType.valueOf(planType.toUpperCase());
-        sub.setPlanType(pt);
-        sub.setMonthlyPostLimit("PRO".equalsIgnoreCase(planType) ? null : null); // unlimited
-        sub.setSeats("AGENCY".equalsIgnoreCase(planType) ? 10 : 3);
+        sub.setPaymentProvider("STRIPE");
         subscriptionRepository.save(sub);
-
-        return Map.of(
-            "razorpaySubscriptionId", razorpaySubId,
-            "keyId", razorpayService.getKeyId()
-        );
+        return stripeService.createCheckoutSession(planType, workspaceId);
     }
 
     /**
-     * Verifies payment signature and activates the subscription.
+     * Verifies the Stripe Checkout Session and activates the subscription.
      */
     @Transactional
-    public SubscriptionResponse verifyAndActivate(String paymentId, String subscriptionId, String signature) {
-        boolean valid = razorpayService.verifyPaymentSignature(paymentId, subscriptionId, signature);
-        if (!valid) {
-            throw new CustomExceptions.AccessDeniedException("Invalid payment signature");
-        }
+    public SubscriptionResponse verifyAndActivate(String sessionId) {
+        Session session = stripeService.retrieveSession(sessionId);
 
-        Subscription sub = subscriptionRepository.findByRazorpaySubscriptionId(subscriptionId)
-            .orElseThrow(() -> new CustomExceptions.ResourceNotFoundException("Subscription", 0L));
+        String planType = session.getMetadata().get("planType");
+        Long workspaceId = Long.parseLong(session.getMetadata().get("workspaceId"));
 
+        Subscription sub = getOrCreate(workspaceId);
+
+        PlanType newPlan = PlanType.valueOf(planType);
         sub.setStatus("ACTIVE");
-        sub.setRazorpayPaymentId(paymentId);
+        sub.setStripeSessionId(sessionId);
+        sub.setStripePaymentIntentId(session.getPaymentIntent());
+        sub.setPlanType(newPlan);
+        sub.setSeats(PlanType.AGENCY == newPlan ? 10 : 3);
+        sub.setMonthlyPostLimit(null); // unlimited for paid plans
+        sub.setPaymentProvider("STRIPE");
 
-        // Determine plan from the razorpay subscription id prefix or look up
-        // For now keep whatever planType was set during initiate; we'll update it here
-        // The plan was already set in initiateUpgrade — but we need to confirm it
-        // Activate: set billing period (monthly)
         OffsetDateTime now = OffsetDateTime.now();
         sub.setCurrentPeriodStart(now);
         sub.setCurrentPeriodEnd(now.plusMonths(1));
+        sub.setCancelAtPeriodEnd(false);
 
         subscriptionRepository.save(sub);
-        log.info("Activated subscription {} for workspace {}", subscriptionId, sub.getWorkspace().getId());
+        log.info("Activated {} plan for workspace {} via Stripe session={}", newPlan, workspaceId, sessionId);
         return toResponse(sub);
     }
 
     /**
-     * Handles Razorpay webhook events.
-     */
-    @Transactional
-    public void handleWebhook(String rawBody, String signature) {
-        if (!razorpayService.verifyWebhookSignature(rawBody, signature)) {
-            log.warn("Invalid webhook signature — ignoring");
-            throw new CustomExceptions.AccessDeniedException("Invalid webhook signature");
-        }
-
-        JSONObject payload = new JSONObject(rawBody);
-        String event = payload.optString("event");
-        log.info("Razorpay webhook event: {}", event);
-
-        switch (event) {
-            case "subscription.activated" -> {
-                String subId = payload.getJSONObject("payload")
-                    .getJSONObject("subscription").getJSONObject("entity").getString("id");
-                subscriptionRepository.findByRazorpaySubscriptionId(subId).ifPresent(sub -> {
-                    sub.setStatus("ACTIVE");
-                    OffsetDateTime now = OffsetDateTime.now();
-                    sub.setCurrentPeriodStart(now);
-                    sub.setCurrentPeriodEnd(now.plusMonths(1));
-                    subscriptionRepository.save(sub);
-                    log.info("Webhook: activated subscription {}", subId);
-                });
-            }
-            case "subscription.cancelled", "subscription.completed" -> {
-                String subId = payload.getJSONObject("payload")
-                    .getJSONObject("subscription").getJSONObject("entity").getString("id");
-                subscriptionRepository.findByRazorpaySubscriptionId(subId).ifPresent(sub -> {
-                    sub.setStatus("CANCELLED");
-                    sub.setPlanType(PlanType.FREE);
-                    sub.setMonthlyPostLimit(10);
-                    sub.setSeats(1);
-                    subscriptionRepository.save(sub);
-                    log.info("Webhook: cancelled subscription {}", subId);
-                });
-            }
-            case "payment.failed" -> {
-                log.warn("Webhook: payment failed for event payload");
-            }
-            default -> log.debug("Unhandled webhook event: {}", event);
-        }
-    }
-
-    /**
-     * Cancels subscription at period end.
+     * Cancels subscription at period end (local only — no Stripe API call needed for one-time payments).
      */
     @Transactional
     public SubscriptionResponse cancelSubscription(Long workspaceId) {
         Subscription sub = subscriptionRepository.findByWorkspaceId(workspaceId)
             .orElseThrow(() -> new CustomExceptions.ResourceNotFoundException("Subscription", workspaceId));
-
-        razorpayService.cancelSubscription(sub.getRazorpaySubscriptionId());
         sub.setCancelAtPeriodEnd(true);
         subscriptionRepository.save(sub);
+        log.info("Marked subscription for workspace {} to cancel at period end", workspaceId);
         return toResponse(sub);
     }
 
@@ -174,12 +117,12 @@ public class SubscriptionService {
             sub.getWorkspace().getId(),
             sub.getPlanType().name(),
             sub.getStatus(),
-            sub.getRazorpaySubscriptionId(),
+            sub.getStripeSessionId(),
             sub.getCurrentPeriodStart(),
             sub.getCurrentPeriodEnd(),
             sub.isCancelAtPeriodEnd(),
             sub.getSeats() != null ? sub.getSeats() : 1,
-            sub.getMonthlyPostLimit() != null ? sub.getMonthlyPostLimit() : 30,
+            sub.getMonthlyPostLimit() != null ? sub.getMonthlyPostLimit() : 10,
             sub.getPostsUsedThisMonth() != null ? sub.getPostsUsedThisMonth() : 0
         );
     }

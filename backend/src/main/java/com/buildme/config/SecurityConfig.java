@@ -37,7 +37,13 @@ public class SecurityConfig {
 
     private static final String[] PUBLIC_PATHS = {
         "/api/auth/**",
-        "/api/integrations/*/callback",
+        "/api/integrations/instagram/callback",
+        "/api/integrations/facebook/callback",
+        "/api/integrations/twitter/callback",
+        "/api/integrations/linkedin/callback",
+        "/api/integrations/youtube/callback",
+        "/api/integrations/tiktok/callback",
+        "/api/integrations/pinterest/callback",
         "/api/razorpay/webhook",
         "/static/uploads/**",
         "/swagger-ui/**",
