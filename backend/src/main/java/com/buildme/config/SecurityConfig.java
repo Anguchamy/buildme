@@ -44,7 +44,9 @@ public class SecurityConfig {
         "/api/integrations/youtube/callback",
         "/api/integrations/tiktok/callback",
         "/api/integrations/pinterest/callback",
-        "/api/razorpay/webhook",
+        "/api/auth/verify-email",
+        "/api/auth/resend-verification",
+        "/api/stripe/webhook",
         "/static/uploads/**",
         "/swagger-ui/**",
         "/swagger-ui.html",
@@ -55,6 +57,7 @@ public class SecurityConfig {
         "/",
         "/login",
         "/register",
+        "/verify-email",
         "/app",
         "/app/**",
         // Vite build assets

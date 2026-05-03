@@ -55,4 +55,11 @@ public class CustomExceptions {
             super(message);
         }
     }
+
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public static class EmailNotVerifiedException extends RuntimeException {
+        public EmailNotVerifiedException(String message) {
+            super(message);
+        }
+    }
 }

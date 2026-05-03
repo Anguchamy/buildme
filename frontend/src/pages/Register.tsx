@@ -14,7 +14,7 @@ const schema = z.object({
 
 export default function Register() {
   const register_ = useRegisterMutation()
-  const { register, handleSubmit, formState: { errors } } = useForm<RegisterRequest>({
+  const { register, handleSubmit, getValues, formState: { errors } } = useForm<RegisterRequest>({
     resolver: zodResolver(schema),
   })
 
@@ -51,6 +51,16 @@ export default function Register() {
               </span>
             ))}
           </div>
+
+          {register_.isSuccess && (
+            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-4 text-center space-y-1">
+              <p className="text-green-600 dark:text-green-400 font-semibold text-sm">Account created!</p>
+              <p className="text-gray-500 dark:text-gray-400 text-xs">
+                We sent a verification link to <strong>{getValues('email')}</strong>.<br />
+                Please check your inbox and verify your email before logging in.
+              </p>
+            </div>
+          )}
 
           <div className="card shadow-card dark:shadow-card-dark">
             <form onSubmit={handleSubmit((data) => register_.mutate(data))} className="space-y-4">

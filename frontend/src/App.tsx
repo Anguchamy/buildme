@@ -9,6 +9,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout'
 const Landing = lazy(() => import('@/pages/Landing'))
 const Login = lazy(() => import('@/pages/Login'))
 const Register = lazy(() => import('@/pages/Register'))
+const VerifyEmail = lazy(() => import('@/pages/VerifyEmail'))
 
 // Protected pages
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
@@ -61,6 +62,8 @@ export default function App() {
               </PublicOnlyRoute>
             }
           />
+
+          <Route path="/verify-email" element={<VerifyEmail />} />
 
           {/* Protected routes */}
           <Route

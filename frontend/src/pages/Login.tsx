@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -5,6 +6,7 @@ import { Link } from 'react-router-dom'
 import { useLoginMutation } from '@/hooks/useAuth'
 import Button from '@/components/common/Button'
 import { LoginRequest } from '@/types'
+import api from '@/api/axios'
 
 const schema = z.object({
   email: z.string().email('Invalid email'),
@@ -13,9 +15,19 @@ const schema = z.object({
 
 export default function Login() {
   const login = useLoginMutation()
-  const { register, handleSubmit, formState: { errors } } = useForm<LoginRequest>({
+  const [resendEmail, setResendEmail] = useState<string | null>(null)
+  const [resendSent, setResendSent] = useState(false)
+  const { register, handleSubmit, getValues, formState: { errors } } = useForm<LoginRequest>({
     resolver: zodResolver(schema),
   })
+
+  const isEmailNotVerified = (login.error as any)?.response?.status === 403
+
+  const handleResend = async () => {
+    const email = resendEmail ?? getValues('email')
+    await api.post(`/auth/resend-verification?email=${encodeURIComponent(email)}`)
+    setResendSent(true)
+  }
 
   return (
     <div className="min-h-screen bg-light-1 dark:bg-surface-0 flex relative overflow-hidden">
@@ -65,12 +77,29 @@ export default function Login() {
                 {errors.password && <p className="text-red-400 text-xs mt-1.5">{errors.password.message}</p>}
               </div>
 
-              {login.error && (
+              {login.error && !isEmailNotVerified && (
                 <div className="flex items-center gap-2.5 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
                   <svg className="text-red-400 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
                   </svg>
                   <p className="text-red-400 text-sm">Invalid email or password</p>
+                </div>
+              )}
+
+              {isEmailNotVerified && (
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-3 space-y-2">
+                  <p className="text-amber-500 text-sm font-medium">Please verify your email before logging in.</p>
+                  {resendSent ? (
+                    <p className="text-green-500 text-xs">Verification email sent! Check your inbox.</p>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => { setResendEmail(getValues('email')); handleResend() }}
+                      className="text-xs text-brand-500 hover:text-brand-600 font-medium underline"
+                    >
+                      Resend verification email
+                    </button>
+                  )}
                 </div>
               )}
 
