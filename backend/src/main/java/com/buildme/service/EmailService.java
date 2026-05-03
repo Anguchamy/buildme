@@ -1,27 +1,40 @@
 package com.buildme.service;
 
-import lombok.RequiredArgsConstructor;
+import com.resend.Resend;
+import com.resend.core.exception.ResendException;
+import com.resend.services.emails.model.CreateEmailOptions;
+import com.resend.services.emails.model.CreateEmailResponse;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
-
 @Service
-@RequiredArgsConstructor
 @Slf4j
 public class EmailService {
 
-    private final JavaMailSender mailSender;
+    @Value("${app.resend.api-key:}")
+    private String apiKey;
+
+    @Value("${app.resend.from:onboarding@resend.dev}")
+    private String fromAddress;
 
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
 
-    @Value("${spring.mail.username:noreply@build.me}")
-    private String fromAddress;
+    private Resend resend;
+    private boolean enabled;
+
+    @PostConstruct
+    public void init() {
+        enabled = apiKey != null && !apiKey.isBlank() && apiKey.startsWith("re_");
+        if (enabled) {
+            resend = new Resend(apiKey);
+            log.info("Resend email service initialized");
+        } else {
+            log.warn("Resend API key not configured — emails will be logged only");
+        }
+    }
 
     public void sendVerificationEmail(String toEmail, String fullName, String token) {
         String link = frontendUrl + "/verify-email?token=" + token;
@@ -33,20 +46,26 @@ public class EmailService {
               Click the button below to verify your email address.</p>
               <a href="%s" style="display:inline-block;background:#8b5cf6;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px;">Verify Email</a>
               <p style="color:#9ca3af;font-size:13px;margin-top:24px;">This link expires in 24 hours. If you didn't create an account, you can safely ignore this email.</p>
-              <p style="color:#d1d5db;font-size:12px;margin-top:32px;">Or copy this URL: %s</p>
+              <p style="color:#d1d5db;font-size:12px;margin-top:32px;">Or copy this link: %s</p>
             </div>
             """.formatted(fullName, link, link);
 
+        if (!enabled) {
+            log.info("[EMAIL - NOT SENT] To: {} | Verify link: {}", toEmail, link);
+            return;
+        }
+
         try {
-            MimeMessage message = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
-            helper.setFrom(fromAddress);
-            helper.setTo(toEmail);
-            helper.setSubject("Verify your build.me account");
-            helper.setText(html, true);
-            mailSender.send(message);
-            log.info("Verification email sent to {}", toEmail);
-        } catch (MessagingException e) {
+            CreateEmailOptions options = CreateEmailOptions.builder()
+                .from(fromAddress)
+                .to(toEmail)
+                .subject("Verify your build.me account")
+                .html(html)
+                .build();
+
+            CreateEmailResponse response = resend.emails().send(options);
+            log.info("Verification email sent to {} (id={})", toEmail, response.getId());
+        } catch (ResendException e) {
             log.error("Failed to send verification email to {}: {}", toEmail, e.getMessage());
         }
     }
