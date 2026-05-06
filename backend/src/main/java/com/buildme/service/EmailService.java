@@ -65,8 +65,9 @@ public class EmailService {
 
             CreateEmailResponse response = resend.emails().send(options);
             log.info("Verification email sent to {} (id={})", toEmail, response.getId());
-        } catch (ResendException e) {
+        } catch (ResendException | RuntimeException e) {
             log.error("Failed to send verification email to {}: {}", toEmail, e.getMessage());
+            log.info("[EMAIL - FALLBACK] To: {} | Verify link: {}", toEmail, link);
         }
     }
 }
