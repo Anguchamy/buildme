@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useSearchParams } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import api from '@/api/axios'
 
 type State = 'loading' | 'success' | 'error'
@@ -9,6 +9,7 @@ export default function VerifyEmail() {
   const token = searchParams.get('token')
   const [state, setState] = useState<State>('loading')
   const [message, setMessage] = useState('')
+  const navigate = useNavigate()
 
   useEffect(() => {
     if (!token) {
@@ -17,7 +18,10 @@ export default function VerifyEmail() {
       return
     }
     api.get(`/auth/verify-email?token=${encodeURIComponent(token)}`)
-      .then(() => setState('success'))
+      .then(() => {
+        setState('success')
+        setTimeout(() => navigate('/login'), 2000)
+      })
       .catch((err) => {
         setState('error')
         setMessage(err?.response?.data?.message ?? 'The link is invalid or has expired.')
@@ -56,7 +60,7 @@ export default function VerifyEmail() {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900 dark:text-white">Email verified!</h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Your account is now active. You can sign in.</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">Your account is active. Redirecting you to login…</p>
             </div>
             <Link to="/login" className="block w-full bg-gradient-to-r from-brand-500 to-accent-500 text-white text-sm font-semibold py-2.5 px-4 rounded-xl text-center hover:opacity-90 transition-opacity">
               Go to Login

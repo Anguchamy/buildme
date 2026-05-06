@@ -10,6 +10,7 @@ const Landing = lazy(() => import('@/pages/Landing'))
 const Login = lazy(() => import('@/pages/Login'))
 const Register = lazy(() => import('@/pages/Register'))
 const VerifyEmail = lazy(() => import('@/pages/VerifyEmail'))
+const CheckEmail = lazy(() => import('@/pages/CheckEmail'))
 
 // Protected pages
 const Dashboard = lazy(() => import('@/pages/Dashboard'))
@@ -64,6 +65,7 @@ export default function App() {
           />
 
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/check-email" element={<CheckEmail />} />
 
           {/* Protected routes */}
           <Route

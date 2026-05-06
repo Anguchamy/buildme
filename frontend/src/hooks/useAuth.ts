@@ -4,6 +4,7 @@ import { authApi } from '@/api/authApi'
 import { useAuthStore } from '@/store/authStore'
 import { LoginRequest, RegisterRequest } from '@/types'
 
+
 export function useLoginMutation() {
   const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
@@ -18,14 +19,12 @@ export function useLoginMutation() {
 }
 
 export function useRegisterMutation() {
-  const login = useAuthStore((s) => s.login)
   const navigate = useNavigate()
 
   return useMutation({
     mutationFn: (data: RegisterRequest) => authApi.register(data),
-    onSuccess: (data) => {
-      login(data.user, data.accessToken, data.refreshToken)
-      navigate('/app/dashboard')
+    onSuccess: (_data, variables) => {
+      navigate('/check-email', { state: { email: variables.email } })
     },
   })
 }
