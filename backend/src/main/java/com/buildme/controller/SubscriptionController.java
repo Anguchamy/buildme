@@ -3,7 +3,6 @@ package com.buildme.controller;
 import com.buildme.dto.request.CreateSubscriptionRequest;
 import com.buildme.dto.request.VerifyPaymentRequest;
 import com.buildme.dto.response.SubscriptionResponse;
-import com.buildme.model.User;
 import com.buildme.service.SubscriptionService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -11,7 +10,6 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -31,30 +29,30 @@ public class SubscriptionController {
     }
 
     /**
-     * Creates a Stripe Checkout Session and returns sessionId + publishableKey + url.
-     * Frontend redirects to the Stripe-hosted checkout page.
+     * Creates a Razorpay Order and returns orderId + keyId for the frontend checkout popup.
      */
     @PostMapping("/api/subscriptions/initiate")
-    @Operation(summary = "Create Stripe Checkout Session for plan upgrade")
+    @Operation(summary = "Create Razorpay order for plan upgrade")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Map<String, Object>> initiateUpgrade(
-        @Valid @RequestBody CreateSubscriptionRequest request,
-        @AuthenticationPrincipal User user
+        @Valid @RequestBody CreateSubscriptionRequest request
     ) {
         return ResponseEntity.ok(subscriptionService.initiateUpgrade(request.workspaceId(), request.planType()));
     }
 
     /**
-     * Verifies the completed Stripe Checkout Session and activates the plan.
-     * Called after Stripe redirects back to success URL with ?session_id=cs_xxx
+     * Verifies Razorpay payment signature and activates the subscription.
      */
     @PostMapping("/api/subscriptions/verify")
-    @Operation(summary = "Verify Stripe session and activate subscription")
+    @Operation(summary = "Verify Razorpay payment and activate subscription")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<SubscriptionResponse> verifyPayment(
         @Valid @RequestBody VerifyPaymentRequest request
     ) {
-        return ResponseEntity.ok(subscriptionService.verifyAndActivate(request.sessionId()));
+        return ResponseEntity.ok(subscriptionService.verifyAndActivate(
+            request.orderId(), request.paymentId(), request.signature(),
+            request.workspaceId(), request.planType()
+        ));
     }
 
     @PostMapping("/api/subscriptions/{workspaceId}/cancel")

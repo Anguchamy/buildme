@@ -2,13 +2,20 @@ import api from './axios'
 import type { Subscription } from '../types'
 
 export interface InitiateUpgradeResponse {
-  sessionId: string
-  publishableKey: string
-  url: string
+  orderId: string
+  keyId: string
+  amount: number
+  currency: string
+  planType: string
+  workspaceId: number
 }
 
 export interface VerifyPaymentPayload {
-  sessionId: string
+  orderId: string
+  paymentId: string
+  signature: string
+  workspaceId: number
+  planType: string
 }
 
 const subscriptionApi = {
@@ -19,7 +26,7 @@ const subscriptionApi = {
     api.post<InitiateUpgradeResponse>('/subscriptions/initiate', { workspaceId, planType }).then(r => r.data),
 
   verifyPayment: (payload: VerifyPaymentPayload) =>
-    api.post<Subscription>('/subscriptions/verify', { sessionId: payload.sessionId }).then(r => r.data),
+    api.post<Subscription>('/subscriptions/verify', payload).then(r => r.data),
 
   cancelSubscription: (workspaceId: number) =>
     api.post<Subscription>(`/subscriptions/${workspaceId}/cancel`).then(r => r.data),

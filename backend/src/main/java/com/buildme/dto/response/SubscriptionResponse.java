@@ -7,7 +7,7 @@ public record SubscriptionResponse(
     Long workspaceId,
     String planType,
     String status,
-    String stripeSessionId,
+    String razorpayOrderId,
     OffsetDateTime currentPeriodStart,
     OffsetDateTime currentPeriodEnd,
     boolean cancelAtPeriodEnd,

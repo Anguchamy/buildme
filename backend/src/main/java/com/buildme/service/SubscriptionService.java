@@ -7,7 +7,6 @@ import com.buildme.model.Subscription;
 import com.buildme.model.Workspace;
 import com.buildme.repository.SubscriptionRepository;
 import com.buildme.repository.WorkspaceRepository;
-import com.stripe.model.checkout.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -23,47 +22,39 @@ public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
     private final WorkspaceRepository workspaceRepository;
-    private final StripeService stripeService;
+    private final RazorpayService razorpayService;
 
     @Transactional
     public SubscriptionResponse getSubscription(Long workspaceId) {
         return toResponse(getOrCreate(workspaceId));
     }
 
-    /**
-     * Creates a Stripe Checkout Session for the plan upgrade.
-     * Returns: sessionId, publishableKey, url.
-     */
     @Transactional
     public Map<String, Object> initiateUpgrade(Long workspaceId, String planType) {
         validatePlanType(planType);
         Subscription sub = getOrCreate(workspaceId);
         sub.setStatus("PENDING");
-        sub.setPaymentProvider("STRIPE");
+        sub.setPaymentProvider("RAZORPAY");
         subscriptionRepository.save(sub);
-        return stripeService.createCheckoutSession(planType, workspaceId);
+        return razorpayService.createOrder(planType, workspaceId);
     }
 
-    /**
-     * Verifies the Stripe Checkout Session and activates the subscription.
-     */
     @Transactional
-    public SubscriptionResponse verifyAndActivate(String sessionId) {
-        Session session = stripeService.retrieveSession(sessionId);
-
-        String planType = session.getMetadata().get("planType");
-        Long workspaceId = Long.parseLong(session.getMetadata().get("workspaceId"));
+    public SubscriptionResponse verifyAndActivate(String orderId, String paymentId, String signature, Long workspaceId, String planType) {
+        if (!razorpayService.verifySignature(orderId, paymentId, signature)) {
+            throw new IllegalArgumentException("Invalid payment signature");
+        }
 
         Subscription sub = getOrCreate(workspaceId);
+        PlanType newPlan = PlanType.valueOf(planType.toUpperCase());
 
-        PlanType newPlan = PlanType.valueOf(planType);
         sub.setStatus("ACTIVE");
-        sub.setStripeSessionId(sessionId);
-        sub.setStripePaymentIntentId(session.getPaymentIntent());
+        sub.setRazorpayOrderId(orderId);
+        sub.setRazorpayPaymentId(paymentId);
         sub.setPlanType(newPlan);
         sub.setSeats(PlanType.AGENCY == newPlan ? 10 : 3);
-        sub.setMonthlyPostLimit(null); // unlimited for paid plans
-        sub.setPaymentProvider("STRIPE");
+        sub.setMonthlyPostLimit(null);
+        sub.setPaymentProvider("RAZORPAY");
 
         OffsetDateTime now = OffsetDateTime.now();
         sub.setCurrentPeriodStart(now);
@@ -71,24 +62,18 @@ public class SubscriptionService {
         sub.setCancelAtPeriodEnd(false);
 
         subscriptionRepository.save(sub);
-        log.info("Activated {} plan for workspace {} via Stripe session={}", newPlan, workspaceId, sessionId);
+        log.info("Activated {} plan for workspace {} via Razorpay orderId={}", newPlan, workspaceId, orderId);
         return toResponse(sub);
     }
 
-    /**
-     * Cancels subscription at period end (local only — no Stripe API call needed for one-time payments).
-     */
     @Transactional
     public SubscriptionResponse cancelSubscription(Long workspaceId) {
         Subscription sub = subscriptionRepository.findByWorkspaceId(workspaceId)
             .orElseThrow(() -> new CustomExceptions.ResourceNotFoundException("Subscription", workspaceId));
         sub.setCancelAtPeriodEnd(true);
         subscriptionRepository.save(sub);
-        log.info("Marked subscription for workspace {} to cancel at period end", workspaceId);
         return toResponse(sub);
     }
-
-    // ── Internals ──────────────────────────────────────────────────────────────
 
     @Transactional
     public Subscription getOrCreate(Long workspaceId) {
@@ -117,7 +102,7 @@ public class SubscriptionService {
             sub.getWorkspace().getId(),
             sub.getPlanType().name(),
             sub.getStatus(),
-            sub.getStripeSessionId(),
+            sub.getRazorpayOrderId(),
             sub.getCurrentPeriodStart(),
             sub.getCurrentPeriodEnd(),
             sub.isCancelAtPeriodEnd(),

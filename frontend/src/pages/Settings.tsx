@@ -104,12 +104,41 @@ export default function Settings() {
 
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null)
 
-  const openStripeCheckout = async (planType: string) => {
+  const openRazorpayCheckout = async (planType: string) => {
     if (!currentWorkspaceId) return
     setUpgradingPlan(planType)
     try {
-      const { url } = await subscriptionApi.initiateUpgrade(currentWorkspaceId, planType)
-      window.location.href = url
+      const orderData = await subscriptionApi.initiateUpgrade(currentWorkspaceId, planType)
+      const options = {
+        key: orderData.keyId,
+        amount: orderData.amount,
+        currency: orderData.currency,
+        name: 'Build.me',
+        description: `${planType.charAt(0) + planType.slice(1).toLowerCase()} Plan`,
+        order_id: orderData.orderId,
+        handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
+          try {
+            await subscriptionApi.verifyPayment({
+              orderId: response.razorpay_order_id,
+              paymentId: response.razorpay_payment_id,
+              signature: response.razorpay_signature,
+              workspaceId: currentWorkspaceId,
+              planType,
+            })
+            queryClient.invalidateQueries({ queryKey: ['subscription', currentWorkspaceId] })
+          } catch (e) {
+            console.error('Payment verification failed:', e)
+          }
+        },
+        modal: {
+          ondismiss: () => setUpgradingPlan(null),
+        },
+        theme: { color: '#7C3AED' },
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const rzp = new (window as any).Razorpay(options)
+      rzp.on('payment.failed', () => setUpgradingPlan(null))
+      rzp.open()
     } catch (e) {
       console.error('Upgrade failed:', e)
       setUpgradingPlan(null)
@@ -322,27 +351,27 @@ export default function Settings() {
                   <p className="font-bold text-gray-900 dark:text-white">Pro</p>
                   <span className="text-xs bg-brand-50 dark:bg-brand-500/20 text-brand-600 dark:text-brand-400 px-2 py-0.5 rounded-full font-medium">Popular</span>
                 </div>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">$19<span className="text-sm font-normal text-gray-400">/mo</span></p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">₹1,599<span className="text-sm font-normal text-gray-400">/mo</span></p>
                 <ul className="mt-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> Unlimited posts</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> All 7 platforms</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> AI captions</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> 3 team seats</li>
                 </ul>
-                <Button className="mt-4 w-full justify-center" size="sm" onClick={() => openStripeCheckout('PRO')} loading={upgradingPlan === 'PRO'}>
+                <Button className="mt-4 w-full justify-center" size="sm" onClick={() => openRazorpayCheckout('PRO')} loading={upgradingPlan === 'PRO'}>
                   Upgrade to Pro
                 </Button>
               </div>
               <div className="card hover:border-light-4 dark:hover:border-white/20 transition-colors">
                 <p className="font-bold text-gray-900 dark:text-white mb-2">Agency</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-white">$49<span className="text-sm font-normal text-gray-400">/mo</span></p>
+                <p className="text-2xl font-bold text-gray-900 dark:text-white">₹3,999<span className="text-sm font-normal text-gray-400">/mo</span></p>
                 <ul className="mt-3 space-y-1.5 text-xs text-gray-500 dark:text-gray-400">
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> Unlimited workspaces</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> 10 team seats</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> White-label reports</li>
                   <li className="flex gap-1.5"><span className="text-brand-500">✓</span> Priority support</li>
                 </ul>
-                <Button variant="secondary" className="mt-4 w-full justify-center" size="sm" onClick={() => openStripeCheckout('AGENCY')} loading={upgradingPlan === 'AGENCY'}>
+                <Button variant="secondary" className="mt-4 w-full justify-center" size="sm" onClick={() => openRazorpayCheckout('AGENCY')} loading={upgradingPlan === 'AGENCY'}>
                   Upgrade to Agency
                 </Button>
               </div>

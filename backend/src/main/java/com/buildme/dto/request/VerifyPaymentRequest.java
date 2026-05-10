@@ -1,11 +1,12 @@
 package com.buildme.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 
-/**
- * Payload sent from the frontend after Stripe Checkout completes.
- * sessionId — the Stripe Checkout Session ID (cs_xxx)
- */
 public record VerifyPaymentRequest(
-    @NotBlank String sessionId
+    @NotBlank String orderId,
+    @NotBlank String paymentId,
+    @NotBlank String signature,
+    @NotNull Long workspaceId,
+    @NotBlank String planType
 ) {}

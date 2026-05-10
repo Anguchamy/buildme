@@ -37,6 +37,12 @@ public class Subscription {
     @Column(name = "payment_subscription_id")
     private String paymentSubscriptionId;
 
+    @Column(name = "razorpay_order_id")
+    private String razorpayOrderId;
+
+    @Column(name = "razorpay_payment_id")
+    private String razorpayPaymentId;
+
     @Column(name = "current_period_start")
     private OffsetDateTime currentPeriodStart;
 
@@ -58,12 +64,6 @@ public class Subscription {
     @Column(name = "posts_used_this_month")
     @Builder.Default
     private Integer postsUsedThisMonth = 0;
-
-    @Column(name = "stripe_session_id")
-    private String stripeSessionId;
-
-    @Column(name = "stripe_payment_intent_id")
-    private String stripePaymentIntentId;
 
     @Column(name = "created_at")
     @Builder.Default

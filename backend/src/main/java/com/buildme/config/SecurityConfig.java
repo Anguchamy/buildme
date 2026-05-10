@@ -46,7 +46,7 @@ public class SecurityConfig {
         "/api/integrations/pinterest/callback",
         "/api/auth/verify-email",
         "/api/auth/resend-verification",
-        "/api/stripe/webhook",
+        "/api/razorpay/webhook",
         "/static/uploads/**",
         "/swagger-ui/**",
         "/swagger-ui.html",
