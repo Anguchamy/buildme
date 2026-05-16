@@ -64,7 +64,7 @@ public class TwitterService implements SocialMediaService {
         }
 
         String accessToken = scheduledPost.getSocialAccount().getAccessToken();
-        String content = scheduledPost.getPost() != null ? scheduledPost.getPost().getContent() : "";
+        String content = scheduledPost.getPost() != null ? scheduledPost.getPost().getCaption() : "";
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
