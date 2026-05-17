@@ -17,6 +17,8 @@ const platformDescriptions: Record<Platform, string> = {
   [Platform.PINTEREST]: 'Pin images and ideas to your Pinterest boards.',
 }
 
+const comingSoonPlatforms: Platform[] = [Platform.TIKTOK, Platform.PINTEREST]
+
 export default function Integrations() {
   const workspaceId = useWorkspaceStore((s) => s.currentWorkspaceId)
   const queryClient = useQueryClient()
@@ -106,12 +108,13 @@ export default function Integrations() {
           const color = getPlatformColor(platform)
           const icon = getPlatformIcon(platform)
           const platformName = platform.charAt(0) + platform.slice(1).toLowerCase()
+          const isComingSoon = comingSoonPlatforms.includes(platform)
 
           return (
             <div
               key={platform}
               className={`card flex flex-col gap-4 transition-all duration-200 ${
-                account ? 'hover:border-success-500/20' : 'hover:border-brand-500/20'
+                isComingSoon ? 'opacity-60' : account ? 'hover:border-success-500/20' : 'hover:border-brand-500/20'
               }`}
             >
               {/* Platform header */}
@@ -125,7 +128,12 @@ export default function Integrations() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
                     <h3 className="font-semibold text-gray-900 dark:text-white">{platformName}</h3>
-                    {account && (
+                    {isComingSoon && (
+                      <span className="text-[10px] font-semibold text-orange-400 bg-orange-400/10 px-1.5 py-0.5 rounded-full">
+                        Coming Soon
+                      </span>
+                    )}
+                    {!isComingSoon && account && (
                       <span className="flex items-center gap-1 text-[10px] font-semibold text-success-500 bg-success-500/10 px-1.5 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 bg-success-500 rounded-full animate-pulse" />
                         Live
@@ -139,7 +147,11 @@ export default function Integrations() {
               </div>
 
               {/* Account info or connect */}
-              {account ? (
+              {isComingSoon ? (
+                <Button size="sm" variant="secondary" className="w-full justify-center" disabled>
+                  Coming Soon
+                </Button>
+              ) : account ? (
                 <div className="flex items-center justify-between pt-2 border-t border-light-3 dark:border-white/5">
                   <div className="min-w-0">
                     <p className="text-xs font-medium text-gray-600 dark:text-gray-300 truncate">
