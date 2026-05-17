@@ -114,7 +114,7 @@ public class InstagramService implements SocialMediaService {
             // 2. Fetch the user's Instagram Business Account linked to their Facebook account
             HttpGet igAccountRequest = new HttpGet(
                 "https://graph.facebook.com/v19.0/me/accounts"
-                + "?fields=instagram_business_account{id,username,name}"
+                + "?fields=instagram_business_account%7Bid%2Cusername%2Cname%7D"
                 + "&access_token=" + accessToken
             );
             String igAccountJson = http.execute(igAccountRequest, r -> EntityUtils.toString(r.getEntity()));
