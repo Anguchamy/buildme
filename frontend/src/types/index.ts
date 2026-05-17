@@ -6,6 +6,7 @@ export enum Platform {
   LINKEDIN = 'LINKEDIN',
   YOUTUBE = 'YOUTUBE',
   PINTEREST = 'PINTEREST',
+  THREADS = 'THREADS',
 }
 
 export enum PostStatus {

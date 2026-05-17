@@ -18,6 +18,7 @@ export function getPlatformColor(platform: Platform | string): string {
     LINKEDIN: '#0A66C2',
     YOUTUBE: '#FF0000',
     PINTEREST: '#E60023',
+    THREADS: '#000000',
   }
   return colors[platform] ?? '#6B7280'
 }
@@ -31,6 +32,7 @@ export function getPlatformCharLimit(platform: Platform | string): number {
     LINKEDIN: 3000,
     YOUTUBE: 5000,
     PINTEREST: 500,
+    THREADS: 500,
   }
   return limits[platform] ?? 2200
 }
@@ -66,6 +68,7 @@ export function getPlatformIcon(platform: Platform | string): string {
     LINKEDIN: '💼',
     YOUTUBE: '▶️',
     PINTEREST: '📌',
+    THREADS: '🧵',
   }
   return icons[platform] ?? '📱'
 }

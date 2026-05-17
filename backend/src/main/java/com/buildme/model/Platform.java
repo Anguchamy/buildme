@@ -7,5 +7,6 @@ public enum Platform {
     TWITTER,
     LINKEDIN,
     YOUTUBE,
-    PINTEREST
+    PINTEREST,
+    THREADS
 }

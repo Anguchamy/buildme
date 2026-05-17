@@ -15,6 +15,7 @@ const platformDescriptions: Record<Platform, string> = {
   [Platform.LINKEDIN]: 'Share professional content on LinkedIn.',
   [Platform.YOUTUBE]: 'Publish video content to your YouTube channel.',
   [Platform.PINTEREST]: 'Pin images and ideas to your Pinterest boards.',
+  [Platform.THREADS]: 'Share text and conversations on Threads.',
 }
 
 const comingSoonPlatforms: Platform[] = [Platform.TIKTOK, Platform.PINTEREST]
