@@ -42,7 +42,7 @@ public class FacebookService implements SocialMediaService {
         return "https://www.facebook.com/v18.0/dialog/oauth"
             + "?client_id=" + appId
             + "&redirect_uri=" + redirectUri
-            + "&scope=pages_manage_posts,pages_read_engagement"
+            + "&scope=pages_show_list,pages_read_engagement,business_management"
             + "&state=" + state + ":" + workspaceId;
     }
 
