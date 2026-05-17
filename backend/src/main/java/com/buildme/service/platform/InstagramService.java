@@ -77,7 +77,7 @@ public class InstagramService implements SocialMediaService {
         return "https://www.facebook.com/v19.0/dialog/oauth"
             + "?client_id=" + clientId
             + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
-            + "&scope=instagram_business_basic,instagram_manage_comments,instagram_manage_insights,instagram_content_publish"
+            + "&scope=pages_show_list,instagram_basic,pages_read_engagement,instagram_manage_comments,instagram_content_publish"
             + "&response_type=code"
             + "&state=" + URLEncoder.encode(stateKey, StandardCharsets.UTF_8);
     }
