@@ -91,8 +91,8 @@ public class InstagramService implements SocialMediaService {
         }
 
         try (CloseableHttpClient http = HttpClients.createDefault()) {
-            // 1. Exchange code for short-lived Instagram token
-            HttpPost tokenRequest = new HttpPost("https://api.instagram.com/oauth/access_token");
+            // 1. Exchange code for access token via Facebook Graph API
+            HttpPost tokenRequest = new HttpPost("https://graph.facebook.com/v19.0/oauth/access_token");
             List<NameValuePair> params = List.of(
                 new BasicNameValuePair("client_id", clientId),
                 new BasicNameValuePair("client_secret", clientSecret),
@@ -104,37 +104,45 @@ public class InstagramService implements SocialMediaService {
             String tokenJson = http.execute(tokenRequest, r -> EntityUtils.toString(r.getEntity()));
             JsonNode tokenNode = objectMapper.readTree(tokenJson);
 
-            if (tokenNode.has("error_type") || tokenNode.has("error")) {
+            if (tokenNode.has("error")) {
                 throw new CustomExceptions.ExternalApiException(
-                    "Instagram token exchange failed: " + tokenNode.path("error_message").asText(
-                        tokenNode.path("error").path("message").asText("unknown error")));
+                    "Instagram token exchange failed: " + tokenNode.path("error").path("message").asText("unknown error"));
             }
 
-            String shortToken = tokenNode.path("access_token").asText();
-            String igUserId = tokenNode.path("user_id").asText();
+            String accessToken = tokenNode.path("access_token").asText();
 
-            // 2. Exchange for long-lived token (60 days)
-            HttpGet longTokenRequest = new HttpGet(
-                "https://graph.instagram.com/access_token"
-                + "?grant_type=ig_exchange_token"
-                + "&client_secret=" + clientSecret
-                + "&access_token=" + shortToken
+            // 2. Fetch the user's Instagram Business Account linked to their Facebook account
+            HttpGet igAccountRequest = new HttpGet(
+                "https://graph.facebook.com/v19.0/me/accounts"
+                + "?fields=instagram_business_account{id,username,name}"
+                + "&access_token=" + accessToken
             );
-            String longTokenJson = http.execute(longTokenRequest, r -> EntityUtils.toString(r.getEntity()));
-            JsonNode longTokenNode = objectMapper.readTree(longTokenJson);
-            String longToken = longTokenNode.path("access_token").asText();
-            long expiresIn = longTokenNode.path("expires_in").asLong(5184000);
+            String igAccountJson = http.execute(igAccountRequest, r -> EntityUtils.toString(r.getEntity()));
+            JsonNode igAccountNode = objectMapper.readTree(igAccountJson);
 
-            // 3. Fetch Instagram profile info
-            HttpGet profileRequest = new HttpGet(
-                "https://graph.instagram.com/me?fields=id,username,name&access_token=" + longToken
-            );
-            String profileJson = http.execute(profileRequest, r -> EntityUtils.toString(r.getEntity()));
-            JsonNode profile = objectMapper.readTree(profileJson);
-            String igUsername = profile.path("username").asText(igUserId);
-            String displayName = profile.path("name").asText(igUsername);
+            // Find first page with a linked Instagram business account
+            JsonNode pages = igAccountNode.path("data");
+            String igUserId = null;
+            String igUsername = null;
+            String displayName = null;
 
-            // 4. Save or update SocialAccount
+            for (JsonNode page : pages) {
+                JsonNode igAccount = page.path("instagram_business_account");
+                if (!igAccount.isMissingNode() && igAccount.has("id")) {
+                    igUserId = igAccount.path("id").asText();
+                    igUsername = igAccount.path("username").asText(igUserId);
+                    displayName = igAccount.path("name").asText(igUsername);
+                    break;
+                }
+            }
+
+            if (igUserId == null) {
+                throw new CustomExceptions.ExternalApiException(
+                    "No Instagram Business account linked to this Facebook account. " +
+                    "Please link an Instagram Business or Creator account to your Facebook Page.");
+            }
+
+            // 3. Save or update SocialAccount
             Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new CustomExceptions.ResourceNotFoundException("Workspace", workspaceId));
 
@@ -151,10 +159,11 @@ public class InstagramService implements SocialMediaService {
             account.setAccountId(igUserId);
             account.setHandle(igUsername);
             account.setDisplayName(displayName);
-            account.setAccessToken(longToken);
+            account.setAccessToken(accessToken);
             account.setConnected(true);
-            account.setTokenExpiresAt(OffsetDateTime.now().plusSeconds(expiresIn));
-            account.setScopes("instagram_business_basic,instagram_manage_comments,instagram_business_manage_messages");
+            // Facebook user tokens are long-lived (60 days)
+            account.setTokenExpiresAt(OffsetDateTime.now().plusDays(60));
+            account.setScopes("instagram_business_basic,instagram_manage_comments,instagram_content_publish");
 
             socialAccountRepository.save(account);
             log.info("Instagram Business account @{} connected for workspace {}", igUsername, workspaceId);
