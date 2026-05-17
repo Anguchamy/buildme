@@ -112,26 +112,42 @@ public class InstagramService implements SocialMediaService {
             String accessToken = tokenNode.path("access_token").asText();
 
             // 2. Fetch the user's Instagram Business Account linked to their Facebook account
-            HttpGet igAccountRequest = new HttpGet(
+            // 2. Get list of Facebook Pages
+            HttpGet pagesRequest = new HttpGet(
                 "https://graph.facebook.com/v19.0/me/accounts"
-                + "?fields=instagram_business_account%7Bid%2Cusername%2Cname%7D"
-                + "&access_token=" + accessToken
+                + "?access_token=" + accessToken
             );
-            String igAccountJson = http.execute(igAccountRequest, r -> EntityUtils.toString(r.getEntity()));
-            JsonNode igAccountNode = objectMapper.readTree(igAccountJson);
+            String pagesJson = http.execute(pagesRequest, r -> EntityUtils.toString(r.getEntity()));
+            JsonNode pagesNode = objectMapper.readTree(pagesJson);
+            JsonNode pages = pagesNode.path("data");
 
-            // Find first page with a linked Instagram business account
-            JsonNode pages = igAccountNode.path("data");
             String igUserId = null;
             String igUsername = null;
             String displayName = null;
 
+            // 3. For each page, fetch linked Instagram business account
             for (JsonNode page : pages) {
-                JsonNode igAccount = page.path("instagram_business_account");
-                if (!igAccount.isMissingNode() && igAccount.has("id")) {
-                    igUserId = igAccount.path("id").asText();
-                    igUsername = igAccount.path("username").asText(igUserId);
-                    displayName = igAccount.path("name").asText(igUsername);
+                String pageId = page.path("id").asText();
+                String pageToken = page.path("access_token").asText();
+                HttpGet igRequest = new HttpGet(
+                    "https://graph.facebook.com/v19.0/" + pageId
+                    + "?fields=instagram_business_account"
+                    + "&access_token=" + pageToken
+                );
+                String igJson = http.execute(igRequest, r -> EntityUtils.toString(r.getEntity()));
+                JsonNode igNode = objectMapper.readTree(igJson).path("instagram_business_account");
+                if (!igNode.isMissingNode() && igNode.has("id")) {
+                    igUserId = igNode.path("id").asText();
+                    // Fetch username separately
+                    HttpGet igProfileRequest = new HttpGet(
+                        "https://graph.facebook.com/v19.0/" + igUserId
+                        + "?fields=username,name"
+                        + "&access_token=" + pageToken
+                    );
+                    String igProfileJson = http.execute(igProfileRequest, r -> EntityUtils.toString(r.getEntity()));
+                    JsonNode igProfile = objectMapper.readTree(igProfileJson);
+                    igUsername = igProfile.path("username").asText(igUserId);
+                    displayName = igProfile.path("name").asText(igUsername);
                     break;
                 }
             }
