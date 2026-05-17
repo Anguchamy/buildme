@@ -9,6 +9,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -39,12 +42,13 @@ public class PinterestService implements SocialMediaService {
 
     @Override
     public String getOAuthUrl(Long workspaceId, String state) {
+        String stateKey = state + ":" + workspaceId;
         return "https://www.pinterest.com/oauth/"
             + "?client_id=" + appId
-            + "&redirect_uri=" + redirectUri
+            + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
             + "&response_type=code"
-            + "&scope=boards:read,pins:write"
-            + "&state=" + state + ":" + workspaceId;
+            + "&scope=boards:read,pins:write,user_accounts:read"
+            + "&state=" + URLEncoder.encode(stateKey, StandardCharsets.UTF_8);
     }
 
     @Override
