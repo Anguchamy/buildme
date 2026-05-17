@@ -22,6 +22,8 @@ import org.apache.hc.core5.http.message.BasicNameValuePair;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -71,12 +73,13 @@ public class InstagramService implements SocialMediaService {
     @Override
     public String getOAuthUrl(Long workspaceId, String state) {
         // Instagram Graph API now uses Facebook OAuth login
+        String stateKey = state + ":" + workspaceId;
         return "https://www.facebook.com/v19.0/dialog/oauth"
             + "?client_id=" + clientId
-            + "&redirect_uri=" + redirectUri
-            + "&scope=instagram_basic,instagram_content_publish,pages_read_engagement"
+            + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
+            + "&scope=instagram_business_basic,instagram_manage_comments,instagram_manage_insights,instagram_content_publish"
             + "&response_type=code"
-            + "&state=" + state + ":" + workspaceId;
+            + "&state=" + URLEncoder.encode(stateKey, StandardCharsets.UTF_8);
     }
 
     @Override
