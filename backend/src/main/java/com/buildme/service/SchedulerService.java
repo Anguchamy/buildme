@@ -1,5 +1,6 @@
 package com.buildme.service;
 
+import com.buildme.model.NotificationType;
 import com.buildme.model.Post;
 import com.buildme.model.PostStatus;
 import com.buildme.model.ScheduledPost;
@@ -32,6 +33,7 @@ public class SchedulerService {
     private final ScheduledPostRepository scheduledPostRepository;
     private final PostRepository postRepository;
     private final List<SocialMediaService> platformServices;
+    private final NotificationService notificationService;
 
     private Map<com.buildme.model.Platform, SocialMediaService> platformServiceMap;
 
@@ -142,6 +144,13 @@ public class SchedulerService {
             log.info("Scheduler: successfully published post {} to {} (externalId={})",
                 sp.getPost().getId(), sp.getPlatform(), externalId);
 
+            notificationService.create(
+                sp.getPost().getAuthor(),
+                NotificationType.POST_PUBLISHED,
+                "Post published",
+                "Your post was published to " + platformLabel(sp.getPlatform())
+            );
+
         } catch (Exception e) {
             handlePublishFailure(sp, e);
         }
@@ -158,6 +167,13 @@ public class SchedulerService {
             sp.setNextRetryAt(null);
             log.error("Scheduler: post {} to {} PERMANENTLY FAILED after {} attempts. Error: {}",
                 sp.getPost().getId(), sp.getPlatform(), newRetryCount, e.getMessage());
+
+            notificationService.create(
+                sp.getPost().getAuthor(),
+                NotificationType.POST_FAILED,
+                "Post failed to publish",
+                "Could not publish your post to " + platformLabel(sp.getPlatform()) + " after " + newRetryCount + " attempts."
+            );
         } else {
             // Exponential backoff retry
             long delayMinutes = DateUtil.backoffDelayMinutes(newRetryCount);
@@ -215,5 +231,10 @@ public class SchedulerService {
     private String truncate(String s, int max) {
         if (s == null) return null;
         return s.length() > max ? s.substring(0, max) + "..." : s;
+    }
+
+    private String platformLabel(com.buildme.model.Platform platform) {
+        String name = platform.name();
+        return name.charAt(0) + name.substring(1).toLowerCase();
     }
 }

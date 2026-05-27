@@ -3,6 +3,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useLogoutMutation } from '@/hooks/useAuth'
 import { useThemeStore } from '@/store/themeStore'
 import { usePostStore } from '@/store/postStore'
+import { useNotifications } from '@/hooks/useNotifications'
 import Button from '@/components/common/Button'
 import AuthenticatedImage from '@/components/common/AuthenticatedImage'
 
@@ -22,17 +23,33 @@ function MoonIcon() {
   )
 }
 
-const notifications = [
-  { id: 1, text: 'Post scheduled for Instagram', time: '2m ago', read: false, icon: '📸' },
-  { id: 2, text: 'LinkedIn post published successfully', time: '1h ago', read: false, icon: '✅' },
-  { id: 3, text: 'Analytics report ready', time: '3h ago', read: true, icon: '📊' },
-]
+function typeIcon(type: string) {
+  switch (type) {
+    case 'POST_PUBLISHED': return '✅'
+    case 'POST_FAILED':    return '❌'
+    case 'POST_SCHEDULED': return '🕐'
+    case 'SOCIAL_ACCOUNT_CONNECTED': return '🔗'
+    case 'SOCIAL_ACCOUNT_DISCONNECTED': return '🔌'
+    default: return '🔔'
+  }
+}
+
+function timeAgo(iso: string) {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60_000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
+}
 
 export default function TopBar() {
   const user = useAuthStore((s) => s.user)
   const logout = useLogoutMutation()
   const { theme, toggleTheme } = useThemeStore()
   const openComposer = usePostStore((s) => s.openComposer)
+  const { notifications, unreadCount, markRead, markAllRead } = useNotifications()
   const [showNotifs, setShowNotifs] = useState(false)
   const [showUser, setShowUser] = useState(false)
   const [search, setSearch] = useState('')
@@ -47,8 +64,6 @@ export default function TopBar() {
     document.addEventListener('mousedown', handleClick)
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
-
-  const unreadCount = notifications.filter((n) => !n.read).length
 
   return (
     <header className="h-14 bg-white dark:bg-surface-1 border-b border-light-3 dark:border-white/5 flex items-center justify-between px-5 shrink-0 gap-4">
@@ -109,21 +124,33 @@ export default function TopBar() {
             <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-surface-2 border border-light-3 dark:border-white/8 rounded-2xl shadow-card dark:shadow-card-dark z-50 overflow-hidden animate-scale-in">
               <div className="px-4 py-3 border-b border-light-3 dark:border-white/5 flex items-center justify-between">
                 <span className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</span>
-                <span className="text-xs text-brand-500 cursor-pointer hover:text-brand-600">Mark all read</span>
+                {unreadCount > 0 && (
+                  <span
+                    className="text-xs text-brand-500 cursor-pointer hover:text-brand-600"
+                    onClick={() => markAllRead.mutate()}
+                  >
+                    Mark all read
+                  </span>
+                )}
               </div>
-              {notifications.map((n) => (
-                <div key={n.id} className={`flex items-start gap-3 px-4 py-3 hover:bg-light-1 dark:hover:bg-surface-3 transition-colors cursor-pointer ${!n.read ? 'bg-brand-50/40 dark:bg-brand-500/5' : ''}`}>
-                  <span className="text-lg leading-none mt-0.5">{n.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className={`text-sm leading-snug ${!n.read ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'}`}>{n.text}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{n.time}</p>
+              {notifications.length === 0 ? (
+                <div className="px-4 py-6 text-center text-sm text-gray-400">No notifications yet</div>
+              ) : (
+                notifications.map((n) => (
+                  <div
+                    key={n.id}
+                    onClick={() => { if (!n.read) markRead.mutate(n.id) }}
+                    className={`flex items-start gap-3 px-4 py-3 hover:bg-light-1 dark:hover:bg-surface-3 transition-colors cursor-pointer ${!n.read ? 'bg-brand-50/40 dark:bg-brand-500/5' : ''}`}
+                  >
+                    <span className="text-lg leading-none mt-0.5">{typeIcon(n.type)}</span>
+                    <div className="flex-1 min-w-0">
+                      <p className={`text-sm leading-snug ${!n.read ? 'font-medium text-gray-900 dark:text-white' : 'text-gray-600 dark:text-gray-300'}`}>{n.message}</p>
+                      <p className="text-xs text-gray-400 mt-0.5">{timeAgo(n.createdAt)}</p>
+                    </div>
+                    {!n.read && <span className="w-2 h-2 bg-brand-500 rounded-full flex-shrink-0 mt-1.5" />}
                   </div>
-                  {!n.read && <span className="w-2 h-2 bg-brand-500 rounded-full flex-shrink-0 mt-1.5" />}
-                </div>
-              ))}
-              <div className="px-4 py-2.5 border-t border-light-3 dark:border-white/5 text-center">
-                <span className="text-xs text-brand-500 cursor-pointer hover:text-brand-600">View all notifications</span>
-              </div>
+                ))
+              )}
             </div>
           )}
         </div>
