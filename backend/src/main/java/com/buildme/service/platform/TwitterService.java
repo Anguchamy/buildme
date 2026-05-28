@@ -65,21 +65,96 @@ public class TwitterService implements SocialMediaService {
 
         String accessToken = scheduledPost.getSocialAccount().getAccessToken();
         String content = scheduledPost.getPost() != null ? scheduledPost.getPost().getCaption() : "";
+        List<com.buildme.model.MediaAsset> assets =
+            scheduledPost.getPost() != null ? scheduledPost.getPost().getMediaAssets() : null;
+
+        log.info("Publishing tweet for post {}", scheduledPost.getId());
 
         HttpHeaders headers = new HttpHeaders();
         headers.setBearerAuth(accessToken);
         headers.setContentType(MediaType.APPLICATION_JSON);
 
-        Map<String, String> body = Map.of("text", content);
-        HttpEntity<Map<String, String>> request = new HttpEntity<>(body, headers);
+        // If media assets present, upload them first via v1.1 media upload API
+        List<String> mediaIds = new java.util.ArrayList<>();
+        if (assets != null && !assets.isEmpty()) {
+            // Twitter media upload uses v1.1 API (OAuth 2.0 Bearer token accepted for uploads)
+            for (com.buildme.model.MediaAsset asset : assets) {
+                if (mediaIds.size() >= 4) break; // Twitter allows max 4 images or 1 video/GIF
+                try {
+                    String mediaId = uploadMediaToTwitter(accessToken, asset);
+                    mediaIds.add(mediaId);
+                    // Twitter allows only 1 video or GIF
+                    if (asset.getContentType() != null &&
+                        (asset.getContentType().startsWith("video/") || asset.getContentType().equals("image/gif"))) {
+                        break;
+                    }
+                } catch (Exception e) {
+                    log.warn("Failed to upload media asset {} to Twitter: {}", asset.getId(), e.getMessage());
+                }
+            }
+        }
 
+        Map<String, Object> tweetBody;
+        if (!mediaIds.isEmpty()) {
+            tweetBody = Map.of(
+                "text", content,
+                "media", Map.of("media_ids", mediaIds)
+            );
+        } else {
+            tweetBody = Map.of("text", content);
+        }
+
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(tweetBody, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(
             "https://api.twitter.com/2/tweets", request, String.class);
 
         JsonNode root = objectMapper.readTree(response.getBody());
+        if (root.has("errors")) {
+            throw new CustomExceptions.ExternalApiException(
+                "Twitter publish failed: " + root.path("errors").get(0).path("message").asText("unknown error"));
+        }
         String tweetId = root.path("data").path("id").asText();
         log.info("Published tweet {} for post {}", tweetId, scheduledPost.getId());
         return tweetId;
+    }
+
+    private String uploadMediaToTwitter(String accessToken, com.buildme.model.MediaAsset asset) throws Exception {
+        // Download media bytes from CDN URL
+        org.apache.hc.client5.http.impl.classic.CloseableHttpClient http =
+            org.apache.hc.client5.http.impl.classic.HttpClients.createDefault();
+
+        byte[] mediaBytes;
+        try (http) {
+            org.apache.hc.client5.http.classic.methods.HttpGet downloadReq =
+                new org.apache.hc.client5.http.classic.methods.HttpGet(asset.getUrl());
+            mediaBytes = http.execute(downloadReq,
+                r -> org.apache.hc.core5.http.io.entity.EntityUtils.toByteArray(r.getEntity()));
+        }
+
+        String mediaType = asset.getContentType() != null ? asset.getContentType() : "image/jpeg";
+
+        // Upload to Twitter v1.1 media upload (simple upload for images < 5MB)
+        HttpHeaders uploadHeaders = new HttpHeaders();
+        uploadHeaders.setBearerAuth(accessToken);
+
+        org.springframework.util.MultiValueMap<String, Object> form =
+            new org.springframework.util.LinkedMultiValueMap<>();
+        form.add("media_data", Base64.getEncoder().encodeToString(mediaBytes));
+        form.add("media_type", mediaType);
+
+        uploadHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
+        HttpEntity<org.springframework.util.MultiValueMap<String, Object>> uploadRequest =
+            new HttpEntity<>(form, uploadHeaders);
+
+        ResponseEntity<String> uploadResponse = restTemplate.postForEntity(
+            "https://upload.twitter.com/1.1/media/upload.json", uploadRequest, String.class);
+
+        JsonNode uploadNode = objectMapper.readTree(uploadResponse.getBody());
+        if (uploadNode.has("errors")) {
+            throw new CustomExceptions.ExternalApiException(
+                "Twitter media upload failed: " + uploadNode.path("errors").toString());
+        }
+        return uploadNode.path("media_id_string").asText();
     }
 
     @Override

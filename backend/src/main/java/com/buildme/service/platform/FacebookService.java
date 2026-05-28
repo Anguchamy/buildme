@@ -64,8 +64,62 @@ public class FacebookService implements SocialMediaService {
         String accessToken = scheduledPost.getSocialAccount().getAccessToken();
         String accountId = scheduledPost.getSocialAccount().getAccountId();
         String caption = scheduledPost.getPost() != null ? scheduledPost.getPost().getCaption() : "";
+        List<com.buildme.model.MediaAsset> assets =
+            scheduledPost.getPost() != null ? scheduledPost.getPost().getMediaAssets() : null;
+
+        log.info("Publishing to Facebook page {}: post {}", accountId, scheduledPost.getId());
 
         try (CloseableHttpClient http = HttpClients.createDefault()) {
+            // If there's an image asset, publish as photo
+            if (assets != null && !assets.isEmpty()) {
+                com.buildme.model.MediaAsset first = assets.get(0);
+                String mediaUrl = first.getUrl();
+                boolean isVideo = first.getContentType() != null && first.getContentType().startsWith("video/");
+
+                if (isVideo) {
+                    // Facebook video upload: POST to /videos endpoint
+                    HttpPost videoRequest = new HttpPost(
+                        "https://graph.facebook.com/v19.0/" + accountId + "/videos"
+                    );
+                    List<NameValuePair> params = new java.util.ArrayList<>(List.of(
+                        new BasicNameValuePair("file_url", mediaUrl),
+                        new BasicNameValuePair("description", caption),
+                        new BasicNameValuePair("access_token", accessToken)
+                    ));
+                    videoRequest.setEntity(new UrlEncodedFormEntity(params));
+                    String response = http.execute(videoRequest, r -> EntityUtils.toString(r.getEntity()));
+                    JsonNode node = objectMapper.readTree(response);
+                    if (node.has("error")) {
+                        throw new CustomExceptions.ExternalApiException(
+                            "Facebook video publish failed: " + node.path("error").path("message").asText("unknown error"));
+                    }
+                    String postId = node.path("id").asText();
+                    log.info("Published video to Facebook page {} — post id {}", accountId, postId);
+                    return postId;
+                } else {
+                    // Facebook photo upload: POST to /photos endpoint
+                    HttpPost photoRequest = new HttpPost(
+                        "https://graph.facebook.com/v19.0/" + accountId + "/photos"
+                    );
+                    List<NameValuePair> params = List.of(
+                        new BasicNameValuePair("url", mediaUrl),
+                        new BasicNameValuePair("caption", caption),
+                        new BasicNameValuePair("access_token", accessToken)
+                    );
+                    photoRequest.setEntity(new UrlEncodedFormEntity(params));
+                    String response = http.execute(photoRequest, r -> EntityUtils.toString(r.getEntity()));
+                    JsonNode node = objectMapper.readTree(response);
+                    if (node.has("error")) {
+                        throw new CustomExceptions.ExternalApiException(
+                            "Facebook photo publish failed: " + node.path("error").path("message").asText("unknown error"));
+                    }
+                    String postId = node.path("post_id").asText(node.path("id").asText());
+                    log.info("Published photo to Facebook page {} — post id {}", accountId, postId);
+                    return postId;
+                }
+            }
+
+            // Text-only post
             HttpPost postRequest = new HttpPost(
                 "https://graph.facebook.com/v19.0/" + accountId + "/feed"
             );
@@ -76,9 +130,15 @@ public class FacebookService implements SocialMediaService {
             postRequest.setEntity(new UrlEncodedFormEntity(params));
             String response = http.execute(postRequest, r -> EntityUtils.toString(r.getEntity()));
             JsonNode node = objectMapper.readTree(response);
+            if (node.has("error")) {
+                throw new CustomExceptions.ExternalApiException(
+                    "Facebook publish failed: " + node.path("error").path("message").asText("unknown error"));
+            }
             String postId = node.path("id").asText();
-            log.info("Published to Facebook page {}: post id {}", accountId, postId);
+            log.info("Published to Facebook page {} — post id {}", accountId, postId);
             return postId;
+        } catch (CustomExceptions.ExternalApiException e) {
+            throw e;
         } catch (Exception e) {
             throw new CustomExceptions.ExternalApiException("Facebook publish failed: " + e.getMessage());
         }

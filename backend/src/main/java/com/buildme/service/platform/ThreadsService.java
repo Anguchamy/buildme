@@ -65,16 +65,33 @@ public class ThreadsService implements SocialMediaService {
         String userId = scheduledPost.getSocialAccount().getAccountId();
         String caption = scheduledPost.getPost() != null ? scheduledPost.getPost().getCaption() : "";
 
+        List<com.buildme.model.MediaAsset> assets =
+            scheduledPost.getPost() != null ? scheduledPost.getPost().getMediaAssets() : null;
+
         try (CloseableHttpClient http = HttpClients.createDefault()) {
             // Step 1: Create a Threads media container
             HttpPost containerRequest = new HttpPost(
                 "https://graph.threads.net/v1.0/" + userId + "/threads"
             );
-            List<NameValuePair> containerParams = List.of(
-                new BasicNameValuePair("media_type", "TEXT"),
-                new BasicNameValuePair("text", caption),
-                new BasicNameValuePair("access_token", accessToken)
-            );
+
+            List<NameValuePair> containerParams = new java.util.ArrayList<>();
+            containerParams.add(new BasicNameValuePair("text", caption));
+            containerParams.add(new BasicNameValuePair("access_token", accessToken));
+
+            if (assets != null && !assets.isEmpty()) {
+                com.buildme.model.MediaAsset first = assets.get(0);
+                String mediaUrl = first.getUrl();
+                if (first.getContentType() != null && first.getContentType().startsWith("video/")) {
+                    containerParams.add(new BasicNameValuePair("media_type", "VIDEO"));
+                    containerParams.add(new BasicNameValuePair("video_url", mediaUrl));
+                } else {
+                    containerParams.add(new BasicNameValuePair("media_type", "IMAGE"));
+                    containerParams.add(new BasicNameValuePair("image_url", mediaUrl));
+                }
+            } else {
+                containerParams.add(new BasicNameValuePair("media_type", "TEXT"));
+            }
+
             containerRequest.setEntity(new UrlEncodedFormEntity(containerParams));
             String containerJson = http.execute(containerRequest, r -> EntityUtils.toString(r.getEntity()));
             JsonNode containerNode = objectMapper.readTree(containerJson);
