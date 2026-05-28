@@ -54,8 +54,17 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
     }
   }, [editingPost?.id])
 
+  const resetForm = () => {
+    setCaption('')
+    setPlatforms([])
+    setScheduledAt(undefined)
+    setSelectedAssets([])
+    setAiSuggestions([])
+  }
+
   const createPost = useCreatePostMutation({
     onSuccess: () => {
+      resetForm()
       setShowSuccess(true)
       setTimeout(() => { setShowSuccess(false); onClose?.() }, 1500)
     }
@@ -243,6 +252,7 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
             <Button
               variant="secondary"
               onClick={handleDraft}
+              disabled={createPost.isPending || updatePost.isPending}
               loading={createPost.isPending}
               leftIcon={
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -255,8 +265,8 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
             <Button
               variant="gradient"
               onClick={handleSchedule}
-              disabled={!scheduledAt || platforms.length === 0 || isOverLimit}
-              loading={createPost.isPending}
+              disabled={!scheduledAt || platforms.length === 0 || isOverLimit || createPost.isPending || updatePost.isPending}
+              loading={createPost.isPending || updatePost.isPending}
               leftIcon={
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
@@ -268,8 +278,8 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
             <Button
               variant="secondary"
               onClick={handlePostNow}
-              disabled={platforms.length === 0 || isOverLimit}
-              loading={createPost.isPending}
+              disabled={platforms.length === 0 || isOverLimit || createPost.isPending || updatePost.isPending}
+              loading={createPost.isPending || updatePost.isPending}
             >
               Post Now
             </Button>
