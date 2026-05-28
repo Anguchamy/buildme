@@ -163,9 +163,22 @@ public class InstagramService implements SocialMediaService {
                     "Instagram token exchange failed: " + tokenNode.path("error").path("message").asText("unknown error"));
             }
 
-            String accessToken = tokenNode.path("access_token").asText();
+            String shortLivedToken = tokenNode.path("access_token").asText();
 
-            // 2. Fetch the user's Instagram Business Account linked to their Facebook account
+            // 1b. Exchange short-lived token for a long-lived token (valid 60 days)
+            HttpGet longLivedRequest = new HttpGet(
+                "https://graph.facebook.com/v19.0/oauth/access_token"
+                + "?grant_type=fb_exchange_token"
+                + "&client_id=" + clientId
+                + "&client_secret=" + clientSecret
+                + "&fb_exchange_token=" + shortLivedToken
+            );
+            String longLivedJson = http.execute(longLivedRequest, r -> EntityUtils.toString(r.getEntity()));
+            JsonNode longLivedNode = objectMapper.readTree(longLivedJson);
+            String accessToken = longLivedNode.has("access_token")
+                ? longLivedNode.path("access_token").asText()
+                : shortLivedToken; // fallback to short-lived if exchange fails
+
             // 2. Get list of Facebook Pages
             HttpGet pagesRequest = new HttpGet(
                 "https://graph.facebook.com/v19.0/me/accounts"

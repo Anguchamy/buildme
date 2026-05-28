@@ -39,10 +39,22 @@ public class NotificationService {
     // SSE stream management
     // -------------------------------------------------------------------------
 
-    public SseEmitter subscribe(Long userId) {
-        SseEmitter emitter = new SseEmitter(0L); // no timeout
+    private static final int MAX_EMITTERS_PER_USER = 5;
+    private static final long EMITTER_TIMEOUT_MS = 30 * 60 * 1000L; // 30 minutes
 
-        emitters.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>()).add(emitter);
+    public SseEmitter subscribe(Long userId) {
+        SseEmitter emitter = new SseEmitter(EMITTER_TIMEOUT_MS);
+
+        CopyOnWriteArrayList<SseEmitter> list =
+            emitters.computeIfAbsent(userId, k -> new CopyOnWriteArrayList<>());
+
+        // Evict oldest emitters if the user somehow has too many (e.g. rapid reconnects)
+        while (list.size() >= MAX_EMITTERS_PER_USER) {
+            SseEmitter oldest = list.get(0);
+            list.remove(oldest);
+            try { oldest.complete(); } catch (Exception ignored) {}
+        }
+        list.add(emitter);
 
         emitter.onCompletion(() -> removeEmitter(userId, emitter));
         emitter.onTimeout(() -> removeEmitter(userId, emitter));
