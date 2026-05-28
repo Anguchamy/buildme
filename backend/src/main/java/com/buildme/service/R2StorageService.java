@@ -70,7 +70,7 @@ public class R2StorageService {
             String date     = now.format(D_FMT);
             String host     = accountId + ".r2.cloudflarestorage.com";
             String uri      = "/" + bucket;
-            String query    = "cors";
+            String query    = "cors=";
             String payloadHash = sha256hex(body);
 
             String canonicalHeaders =
