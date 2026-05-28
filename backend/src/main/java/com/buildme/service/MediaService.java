@@ -140,10 +140,13 @@ public class MediaService {
         MediaAsset asset = mediaAssetRepository.findById(assetId)
             .orElseThrow(() -> new CustomExceptions.ResourceNotFoundException("MediaAsset", assetId));
 
-        // R2 assets are publicly accessible — redirect instead of proxying bytes
-        if (r2StorageService.isEnabled() && asset.getUrl() != null && asset.getUrl().startsWith("http")) {
+        // R2 assets — redirect to public URL or presigned GET URL
+        if (r2StorageService.isEnabled() && asset.getS3Key() != null) {
+            String redirectUrl = r2StorageService.hasPublicUrl()
+                ? r2StorageService.resolvePublicUrl(asset.getS3Key())
+                : r2StorageService.generatePresignedGetUrl(asset.getS3Key(), 3600);
             HttpHeaders headers = new HttpHeaders();
-            headers.set(HttpHeaders.LOCATION, asset.getUrl());
+            headers.set(HttpHeaders.LOCATION, redirectUrl);
             headers.set(HttpHeaders.CACHE_CONTROL, "max-age=3600");
             return ResponseEntity.status(302).headers(headers).build();
         }
@@ -192,9 +195,20 @@ public class MediaService {
     }
 
     public MediaAssetResponse toResponse(MediaAsset ma) {
+        String url = ma.getUrl();
+        // If R2 is enabled but no public URL is configured, the stored URL is the
+        // private S3 endpoint which browsers can't access. Serve a presigned GET URL instead.
+        if (r2StorageService.isEnabled() && !r2StorageService.hasPublicUrl()
+                && ma.getS3Key() != null && !ma.getS3Key().isBlank()) {
+            try {
+                url = r2StorageService.generatePresignedGetUrl(ma.getS3Key(), 3600);
+            } catch (Exception e) {
+                log.warn("Could not generate presigned GET URL for asset {}: {}", ma.getId(), e.getMessage());
+            }
+        }
         return new MediaAssetResponse(
             ma.getId(), ma.getFileName(), ma.getOriginalName(), ma.getContentType(),
-            ma.getFileSize(), ma.getUrl(), ma.getThumbnailUrl(), ma.getWidth(),
+            ma.getFileSize(), url, url, ma.getWidth(),
             ma.getHeight(), ma.getDurationSeconds(), ma.getSource(),
             ma.getExternalId(), ma.getCreatedAt()
         );

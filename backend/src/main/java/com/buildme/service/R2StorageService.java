@@ -115,6 +115,51 @@ public class R2StorageService {
 
     public boolean isEnabled() { return enabled; }
 
+    /** True if a public base URL is configured (objects are publicly accessible). */
+    public boolean hasPublicUrl() { return !publicUrl.isBlank(); }
+
+    /**
+     * Generate a presigned GET URL so browsers can fetch private R2 objects.
+     * Valid for the given number of seconds.
+     */
+    public String generatePresignedGetUrl(String key, int expiresSeconds) {
+        try {
+            ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+            String datetime = now.format(DT_FMT);
+            String date     = now.format(D_FMT);
+            String host     = accountId + ".r2.cloudflarestorage.com";
+            String uri      = "/" + bucket + "/" + key;
+
+            String scope      = date + "/auto/s3/aws4_request";
+            String credential = accessKey + "/" + scope;
+
+            String queryString =
+                "X-Amz-Algorithm=AWS4-HMAC-SHA256" +
+                "&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD" +
+                "&X-Amz-Credential=" + urlEncode(credential) +
+                "&X-Amz-Date=" + datetime +
+                "&X-Amz-Expires=" + expiresSeconds +
+                "&X-Amz-SignedHeaders=host";
+
+            String canonicalHeaders = "host:" + host + "\n";
+            String signedHeaders = "host";
+
+            String canonicalRequest =
+                "GET\n" + uri + "\n" + queryString + "\n" +
+                canonicalHeaders + "\n" + signedHeaders + "\n" +
+                "UNSIGNED-PAYLOAD";
+
+            String toSign = "AWS4-HMAC-SHA256\n" + datetime + "\n" + scope + "\n"
+                + sha256hex(canonicalRequest.getBytes(StandardCharsets.UTF_8));
+
+            String sig = hmacHex(signingKey(secretKey, date), toSign);
+
+            return "https://" + host + uri + "?" + queryString + "&X-Amz-Signature=" + sig;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate presigned GET URL: " + e.getMessage(), e);
+        }
+    }
+
     /**
      * Generate a presigned PUT URL for direct browser-to-R2 upload.
      * Valid for the given number of seconds (max 604800 = 7 days for AWS4).
