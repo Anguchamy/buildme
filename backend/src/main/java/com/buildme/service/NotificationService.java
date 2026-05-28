@@ -5,6 +5,7 @@ import com.buildme.model.Notification;
 import com.buildme.model.NotificationType;
 import com.buildme.model.User;
 import com.buildme.repository.NotificationRepository;
+import com.buildme.repository.UserRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,7 @@ public class NotificationService {
     private static final int PAGE_SIZE = 20;
 
     private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
     private final ObjectMapper objectMapper;
 
     // userId -> list of active SSE emitters (user can have multiple tabs open)
@@ -94,7 +96,9 @@ public class NotificationService {
     // -------------------------------------------------------------------------
 
     @Transactional
-    public NotificationResponse create(User user, NotificationType type, String title, String message) {
+    public NotificationResponse create(Long userId, NotificationType type, String title, String message) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
         Notification n = Notification.builder()
                 .user(user)
                 .type(type)
@@ -103,7 +107,7 @@ public class NotificationService {
                 .build();
         n = notificationRepository.save(n);
         NotificationResponse response = NotificationResponse.from(n);
-        push(user.getId(), response);
+        push(userId, response);
         return response;
     }
 

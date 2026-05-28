@@ -145,7 +145,7 @@ public class SchedulerService {
                 sp.getPost().getId(), sp.getPlatform(), externalId);
 
             notificationService.create(
-                sp.getPost().getAuthor(),
+                sp.getPost().getAuthor().getId(),
                 NotificationType.POST_PUBLISHED,
                 "Post published",
                 "Your post was published to " + platformLabel(sp.getPlatform())
@@ -169,7 +169,7 @@ public class SchedulerService {
                 sp.getPost().getId(), sp.getPlatform(), newRetryCount, e.getMessage());
 
             notificationService.create(
-                sp.getPost().getAuthor(),
+                sp.getPost().getAuthor().getId(),
                 NotificationType.POST_FAILED,
                 "Post failed to publish",
                 "Could not publish your post to " + platformLabel(sp.getPlatform()) + " after " + newRetryCount + " attempts."
