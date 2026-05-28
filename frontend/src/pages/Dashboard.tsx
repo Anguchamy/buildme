@@ -7,6 +7,7 @@ import PostCard from '@/components/post/PostCard'
 import { Platform, PostStatus } from '@/types'
 import { usePostStore } from '@/store/postStore'
 import Button from '@/components/common/Button'
+import PageLoader from '@/components/common/PageLoader'
 import { format, subDays } from 'date-fns'
 import { getPlatformColor, getPlatformIcon } from '@/utils/helpers'
 import { Link } from 'react-router-dom'
@@ -15,8 +16,8 @@ export default function Dashboard() {
   const user = useAuthStore((s) => s.user)
   const { currentWorkspaceId, workspaces } = useWorkspaceStore()
   const workspace = workspaces.find((w) => w.id === currentWorkspaceId)
-  const { data: posts = [] } = usePostsQuery()
-  const { data: analytics = [] } = useWorkspaceAnalytics(
+  const { data: posts = [], isLoading: postsLoading } = usePostsQuery()
+  const { data: analytics = [], isLoading: analyticsLoading } = useWorkspaceAnalytics(
     format(subDays(new Date(), 30), 'yyyy-MM-dd'),
     format(new Date(), 'yyyy-MM-dd')
   )
@@ -42,6 +43,8 @@ export default function Dashboard() {
     .filter((p) => p.status === PostStatus.SCHEDULED && p.scheduledAt)
     .sort((a, b) => new Date(a.scheduledAt!).getTime() - new Date(b.scheduledAt!).getTime())
     .slice(0, 5)
+
+  if (postsLoading || analyticsLoading) return <PageLoader />
 
   return (
     <div className="space-y-6 animate-fade-in">

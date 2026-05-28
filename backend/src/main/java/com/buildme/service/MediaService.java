@@ -140,16 +140,20 @@ public class MediaService {
         MediaAsset asset = mediaAssetRepository.findById(assetId)
             .orElseThrow(() -> new CustomExceptions.ResourceNotFoundException("MediaAsset", assetId));
 
+        // R2 assets are publicly accessible — redirect instead of proxying bytes
+        if (r2StorageService.isEnabled() && asset.getUrl() != null && asset.getUrl().startsWith("http")) {
+            HttpHeaders headers = new HttpHeaders();
+            headers.set(HttpHeaders.LOCATION, asset.getUrl());
+            headers.set(HttpHeaders.CACHE_CONTROL, "max-age=3600");
+            return ResponseEntity.status(302).headers(headers).build();
+        }
+
         byte[] data;
-        if (r2StorageService.isEnabled()) {
-            data = r2StorageService.getObject(asset.getS3Key());
-        } else {
-            try {
-                Path filePath = Paths.get(localUploadDir).resolve(asset.getS3Key());
-                data = java.nio.file.Files.readAllBytes(filePath);
-            } catch (IOException e) {
-                throw new CustomExceptions.ExternalApiException("Failed to read local file", e);
-            }
+        try {
+            Path filePath = Paths.get(localUploadDir).resolve(asset.getS3Key());
+            data = java.nio.file.Files.readAllBytes(filePath);
+        } catch (IOException e) {
+            throw new CustomExceptions.ExternalApiException("Failed to read local file", e);
         }
 
         HttpHeaders headers = new HttpHeaders();

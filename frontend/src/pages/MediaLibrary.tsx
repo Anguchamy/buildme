@@ -8,6 +8,7 @@ import { mediaApi, uploadViaPresignedUrl } from '@/api/mediaApi'
 import { MediaAsset } from '@/types'
 import { useWorkspaceStore } from '@/store/workspaceStore'
 import Button from '@/components/common/Button'
+import PageLoader from '@/components/common/PageLoader'
 
 type Tab = 'my-files' | 'upload'
 type ViewMode = 'grid' | 'list'
@@ -47,6 +48,8 @@ export default function MediaLibrary() {
 
   const { data: assets = [], isLoading } = useMediaQuery()
   const deleteMedia = useDeleteMedia()
+
+  if (isLoading) return <PageLoader />
 
   const filteredAssets = assets.filter((a) => {
     if (filterType === 'image') return a.contentType?.startsWith('image/')
@@ -172,7 +175,7 @@ export default function MediaLibrary() {
                 >
                   {asset.contentType?.startsWith('image/') ? (
                     <AuthenticatedImage
-                      src={mediaApi.getFileUrl(workspaceId, asset.id)}
+                      src={asset.url ?? mediaApi.getFileUrl(workspaceId, asset.id)}
                       alt={asset.originalName ?? ''}
                       className="w-full h-full object-cover"
                     />
@@ -280,7 +283,7 @@ export default function MediaLibrary() {
             </button>
             {preview.contentType?.startsWith('image/') ? (
               <AuthenticatedImage
-                src={mediaApi.getFileUrl(workspaceId, preview.id)}
+                src={preview.url ?? mediaApi.getFileUrl(workspaceId, preview.id)}
                 alt={preview.originalName ?? ''}
                 className="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl"
               />
@@ -288,7 +291,7 @@ export default function MediaLibrary() {
               <video
                 controls
                 className="max-h-[85vh] max-w-full rounded-2xl shadow-2xl"
-                src={mediaApi.getFileUrl(workspaceId, preview.id)}
+                src={preview.url ?? mediaApi.getFileUrl(workspaceId, preview.id)}
               >
                 Your browser does not support video playback.
               </video>

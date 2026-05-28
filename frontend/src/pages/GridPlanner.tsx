@@ -3,6 +3,7 @@ import { usePostsQuery, useUpdatePostMutation } from '@/hooks/usePosts'
 import InstagramGrid from '@/components/grid/InstagramGrid'
 import Modal from '@/components/common/Modal'
 import PostCard from '@/components/post/PostCard'
+import PageLoader from '@/components/common/PageLoader'
 import { Post } from '@/types'
 
 export default function GridPlanner() {
@@ -26,9 +27,7 @@ export default function GridPlanner() {
     if (post) setSelectedPost(post)
   }
 
-  if (isLoading) {
-    return <div className="animate-pulse text-gray-400">Loading grid...</div>
-  }
+  if (isLoading) return <PageLoader />
 
   return (
     <div className="space-y-6 animate-fade-in">

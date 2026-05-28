@@ -9,11 +9,15 @@ import { Platform, Post } from '@/types'
 import { useState } from 'react'
 import PostCard from '@/components/post/PostCard'
 import Modal from '@/components/common/Modal'
+import PageLoader from '@/components/common/PageLoader'
 
 export default function ContentCalendar() {
-  const { data: posts = [] } = usePostsQuery()
+  const { data: posts = [], isLoading } = usePostsQuery()
+
   const scheduleMutation = useSchedulePostMutation()
   const [selectedPost, setSelectedPost] = useState<Post | null>(null)
+
+  if (isLoading) return <PageLoader />
 
   const events = posts
     .filter((p) => p.scheduledAt)

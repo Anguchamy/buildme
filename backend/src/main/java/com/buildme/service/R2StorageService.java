@@ -36,8 +36,80 @@ public class R2StorageService {
         if (enabled) {
             httpClient = new OkHttpClient();
             log.info("Cloudflare R2 enabled — bucket: {}", bucket);
+            applyBucketCors();
         } else {
             log.info("R2 not configured — using local storage");
+        }
+    }
+
+    /**
+     * Sets a permissive CORS policy on the R2 bucket so browsers can PUT directly
+     * via presigned URLs.  Safe to call on every startup — it is idempotent.
+     */
+    private void applyBucketCors() {
+        try {
+            String corsXml =
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                "<CORSConfiguration>" +
+                  "<CORSRule>" +
+                    "<AllowedOrigin>*</AllowedOrigin>" +
+                    "<AllowedMethod>GET</AllowedMethod>" +
+                    "<AllowedMethod>PUT</AllowedMethod>" +
+                    "<AllowedMethod>POST</AllowedMethod>" +
+                    "<AllowedMethod>DELETE</AllowedMethod>" +
+                    "<AllowedMethod>HEAD</AllowedMethod>" +
+                    "<AllowedHeader>*</AllowedHeader>" +
+                    "<MaxAgeSeconds>3600</MaxAgeSeconds>" +
+                  "</CORSRule>" +
+                "</CORSConfiguration>";
+
+            byte[] body = corsXml.getBytes(StandardCharsets.UTF_8);
+
+            ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+            String datetime = now.format(DT_FMT);
+            String date     = now.format(D_FMT);
+            String host     = accountId + ".r2.cloudflarestorage.com";
+            String uri      = "/" + bucket;
+            String query    = "cors";
+            String payloadHash = sha256hex(body);
+
+            String canonicalHeaders =
+                "content-type:application/xml\n" +
+                "host:" + host + "\n" +
+                "x-amz-content-sha256:" + payloadHash + "\n" +
+                "x-amz-date:" + datetime + "\n";
+            String signedHeaders = "content-type;host;x-amz-content-sha256;x-amz-date";
+
+            String canonicalRequest = "PUT\n" + uri + "\n" + query + "\n" +
+                canonicalHeaders + "\n" + signedHeaders + "\n" + payloadHash;
+
+            String scope  = date + "/auto/s3/aws4_request";
+            String toSign = "AWS4-HMAC-SHA256\n" + datetime + "\n" + scope + "\n"
+                + sha256hex(canonicalRequest.getBytes(StandardCharsets.UTF_8));
+
+            String sig  = hmacHex(signingKey(secretKey, date), toSign);
+            String auth = "AWS4-HMAC-SHA256 Credential=" + accessKey + "/" + scope
+                + ", SignedHeaders=" + signedHeaders + ", Signature=" + sig;
+
+            Request request = new Request.Builder()
+                .url("https://" + host + uri + "?" + query)
+                .put(RequestBody.create(body, MediaType.parse("application/xml")))
+                .header("content-type", "application/xml")
+                .header("x-amz-content-sha256", payloadHash)
+                .header("x-amz-date", datetime)
+                .header("Authorization", auth)
+                .build();
+
+            try (Response response = httpClient.newCall(request).execute()) {
+                if (response.isSuccessful()) {
+                    log.info("R2 CORS policy applied to bucket '{}'", bucket);
+                } else {
+                    String respBody = response.body() != null ? response.body().string() : "";
+                    log.warn("R2 CORS PUT returned HTTP {}: {}", response.code(), respBody);
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not apply R2 CORS policy: {}", e.getMessage());
         }
     }
 

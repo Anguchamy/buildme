@@ -6,6 +6,7 @@ import { useWorkspaceStore } from '@/store/workspaceStore'
 import { Platform, SocialAccount } from '@/types'
 import { getPlatformColor, getPlatformIcon } from '@/utils/helpers'
 import Button from '@/components/common/Button'
+import PageLoader from '@/components/common/PageLoader'
 
 const platformDescriptions: Record<Platform, string> = {
   [Platform.INSTAGRAM]: 'Share photos, reels, and stories to your Instagram audience.',
@@ -34,7 +35,7 @@ export default function Integrations() {
     }
   }, [connectedPlatform, oauthError])
 
-  const { data: accounts = [] } = useQuery({
+  const { data: accounts = [], isLoading } = useQuery({
     queryKey: ['social-accounts', workspaceId],
     queryFn: () => integrationApi.getConnectedAccounts(workspaceId!),
     enabled: !!workspaceId,
@@ -51,6 +52,8 @@ export default function Integrations() {
     mutationFn: (platform: string) => integrationApi.disconnect(workspaceId!, platform),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['social-accounts', workspaceId] }),
   })
+
+  if (isLoading) return <PageLoader />
 
   const platforms = Object.values(Platform)
   const connectedCount = accounts.filter((a) => a.connected).length

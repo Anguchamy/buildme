@@ -5,6 +5,7 @@ import StatsCard from '@/components/analytics/StatsCard'
 import EngagementChart from '@/components/analytics/EngagementChart'
 import PlatformBreakdown from '@/components/analytics/PlatformBreakdown'
 import Button from '@/components/common/Button'
+import PageLoader from '@/components/common/PageLoader'
 
 type Range = '7d' | '30d' | '90d'
 
@@ -16,6 +17,8 @@ export default function Analytics() {
   const to = format(new Date(), 'yyyy-MM-dd')
 
   const { data: analytics = [], isLoading } = useWorkspaceAnalytics(from, to)
+
+  if (isLoading) return <PageLoader />
 
   const totals = analytics.reduce(
     (acc, a) => ({

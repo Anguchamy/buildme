@@ -8,6 +8,7 @@ import api from '@/api/axios'
 import Button from '@/components/common/Button'
 import AuthenticatedImage from '@/components/common/AuthenticatedImage'
 import { mediaApi, uploadViaPresignedUrl } from '@/api/mediaApi'
+import PageLoader from '@/components/common/PageLoader'
 
 type Tab = 'profile' | 'workspace' | 'subscription' | 'notifications'
 

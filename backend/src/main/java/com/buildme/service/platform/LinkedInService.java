@@ -52,8 +52,55 @@ public class LinkedInService implements SocialMediaService {
         if (scheduledPost.getSocialAccount() == null) {
             throw new CustomExceptions.ExternalApiException("LinkedIn account not connected");
         }
+
+        String accessToken = scheduledPost.getSocialAccount().getAccessToken();
+        String authorId    = scheduledPost.getSocialAccount().getAccountId();
+        String caption     = scheduledPost.getPost() != null ? scheduledPost.getPost().getCaption() : "";
+
         log.info("Publishing to LinkedIn: post {}", scheduledPost.getId());
-        return "li_" + System.currentTimeMillis();
+
+        // LinkedIn UGC Post API
+        String body = """
+            {
+              "author": "urn:li:person:%s",
+              "lifecycleState": "PUBLISHED",
+              "specificContent": {
+                "com.linkedin.ugc.ShareContent": {
+                  "shareCommentary": { "text": %s },
+                  "shareMediaCategory": "NONE"
+                }
+              },
+              "visibility": {
+                "com.linkedin.ugc.MemberNetworkVisibility": "PUBLIC"
+              }
+            }
+            """.formatted(authorId, objectMapper.writeValueAsString(caption));
+
+        try (CloseableHttpClient http = HttpClients.createDefault()) {
+            org.apache.hc.client5.http.classic.methods.HttpPost req =
+                new org.apache.hc.client5.http.classic.methods.HttpPost("https://api.linkedin.com/v2/ugcPosts");
+            req.setHeader("Authorization", "Bearer " + accessToken);
+            req.setHeader("Content-Type", "application/json");
+            req.setHeader("X-Restli-Protocol-Version", "2.0.0");
+            req.setEntity(new org.apache.hc.core5.http.io.entity.StringEntity(body,
+                org.apache.hc.core5.http.ContentType.APPLICATION_JSON));
+
+            String response = http.execute(req, r -> EntityUtils.toString(r.getEntity()));
+            JsonNode node = objectMapper.readTree(response);
+
+            if (node.has("status") && node.path("status").asInt() >= 400) {
+                throw new CustomExceptions.ExternalApiException(
+                    "LinkedIn publish failed: " + node.path("message").asText(response));
+            }
+
+            String postId = node.path("id").asText();
+            log.info("Published to LinkedIn — post id {}", postId);
+            return postId.isBlank() ? "li_" + System.currentTimeMillis() : postId;
+        } catch (CustomExceptions.ExternalApiException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new CustomExceptions.ExternalApiException("LinkedIn publish failed: " + e.getMessage());
+        }
     }
 
     @Override
