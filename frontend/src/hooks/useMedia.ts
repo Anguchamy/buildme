@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { mediaApi } from '@/api/mediaApi'
+import { mediaApi, uploadViaPresignedUrl } from '@/api/mediaApi'
 import { useWorkspaceStore } from '@/store/workspaceStore'
 
 export function useMediaQuery(page = 0, size = 20) {
@@ -18,7 +18,7 @@ export function useUploadMedia() {
   return useMutation({
     mutationFn: async (file: File) => {
       if (!workspaceId) throw new Error('No workspace selected')
-      return mediaApi.uploadDirect(workspaceId, file)
+      return uploadViaPresignedUrl(workspaceId, file)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['media', workspaceId] })

@@ -7,7 +7,7 @@ import subscriptionApi from '@/api/subscriptionApi'
 import api from '@/api/axios'
 import Button from '@/components/common/Button'
 import AuthenticatedImage from '@/components/common/AuthenticatedImage'
-import { mediaApi } from '@/api/mediaApi'
+import { mediaApi, uploadViaPresignedUrl } from '@/api/mediaApi'
 
 type Tab = 'profile' | 'workspace' | 'subscription' | 'notifications'
 
@@ -53,8 +53,8 @@ export default function Settings() {
     mutationFn: async () => {
       let avatarUrl: string | undefined
       if (avatarFileRef.current && currentWorkspaceId) {
-        const asset = await mediaApi.uploadDirect(currentWorkspaceId, avatarFileRef.current)
-        avatarUrl = mediaApi.getFileUrl(currentWorkspaceId, asset.id)
+        const assetId = await uploadViaPresignedUrl(currentWorkspaceId, avatarFileRef.current)
+        avatarUrl = mediaApi.getFileUrl(currentWorkspaceId, assetId)
       }
       return api.patch('/users/me', { fullName, ...(avatarUrl ? { avatarUrl } : {}) }).then((r) => r.data)
     },

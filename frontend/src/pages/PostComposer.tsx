@@ -24,6 +24,7 @@ const PLATFORM_CHAR_LIMITS: Record<Platform, number> = {
   [Platform.TIKTOK]: 2200,
   [Platform.YOUTUBE]: 5000,
   [Platform.PINTEREST]: 500,
+  [Platform.THREADS]: 500,
 }
 
 interface PostComposerProps {

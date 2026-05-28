@@ -43,6 +43,57 @@ public class R2StorageService {
 
     public boolean isEnabled() { return enabled; }
 
+    /**
+     * Generate a presigned PUT URL for direct browser-to-R2 upload.
+     * Valid for the given number of seconds (max 604800 = 7 days for AWS4).
+     */
+    public String generatePresignedPutUrl(String key, String contentType, int expiresSeconds) {
+        try {
+            ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
+            String datetime = now.format(DT_FMT);
+            String date     = now.format(D_FMT);
+            String host     = accountId + ".r2.cloudflarestorage.com";
+            String uri      = "/" + bucket + "/" + key;
+
+            String scope    = date + "/auto/s3/aws4_request";
+            String credential = accessKey + "/" + scope;
+
+            // Query string parameters for presigned URL (must be sorted)
+            String queryString =
+                "X-Amz-Algorithm=AWS4-HMAC-SHA256" +
+                "&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD" +
+                "&X-Amz-Credential=" + urlEncode(credential) +
+                "&X-Amz-Date=" + datetime +
+                "&X-Amz-Expires=" + expiresSeconds +
+                "&X-Amz-SignedHeaders=content-type%3Bhost";
+
+            String canonicalHeaders = "content-type:" + contentType + "\nhost:" + host + "\n";
+            String signedHeaders = "content-type;host";
+
+            String canonicalRequest =
+                "PUT\n" + uri + "\n" + queryString + "\n" +
+                canonicalHeaders + "\n" + signedHeaders + "\n" +
+                "UNSIGNED-PAYLOAD";
+
+            String toSign = "AWS4-HMAC-SHA256\n" + datetime + "\n" + scope + "\n"
+                + sha256hex(canonicalRequest.getBytes(StandardCharsets.UTF_8));
+
+            String sig = hmacHex(signingKey(secretKey, date), toSign);
+
+            return "https://" + host + uri + "?" + queryString + "&X-Amz-Signature=" + sig;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to generate presigned URL: " + e.getMessage(), e);
+        }
+    }
+
+    private static String urlEncode(String s) {
+        try {
+            return java.net.URLEncoder.encode(s, StandardCharsets.UTF_8).replace("+", "%20");
+        } catch (Exception e) {
+            return s;
+        }
+    }
+
     public String upload(String key, byte[] bytes, String contentType) {
         try {
             ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
@@ -179,7 +230,7 @@ public class R2StorageService {
         }
     }
 
-    private String resolvePublicUrl(String key) {
+    public String resolvePublicUrl(String key) {
         if (!publicUrl.isBlank())
             return publicUrl.stripTrailing() + "/" + key;
         return "https://" + bucket + "." + accountId + ".r2.cloudflarestorage.com/" + key;

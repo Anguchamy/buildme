@@ -4,7 +4,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import UploadZone from '@/components/media/UploadZone'
 import ConfirmDialog from '@/components/common/ConfirmDialog'
 import AuthenticatedImage from '@/components/common/AuthenticatedImage'
-import { mediaApi } from '@/api/mediaApi'
+import { mediaApi, uploadViaPresignedUrl } from '@/api/mediaApi'
 import { MediaAsset } from '@/types'
 import { useWorkspaceStore } from '@/store/workspaceStore'
 import Button from '@/components/common/Button'
@@ -62,7 +62,7 @@ export default function MediaLibrary() {
     setIsUploading(true)
 
     const promises = files.map((f) =>
-      mediaApi.uploadDirect(workspaceId, f)
+      uploadViaPresignedUrl(workspaceId, f)
         .then(() => setFileStatuses((prev) => ({ ...prev, [f.name]: 'success' })))
         .catch(() => setFileStatuses((prev) => ({ ...prev, [f.name]: 'error' })))
     )

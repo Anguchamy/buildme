@@ -93,18 +93,40 @@ public class MediaService {
     @Transactional
     public Map<String, Object> generateUploadUrl(Long workspaceId, Long userId,
                                                   String fileName, String contentType, Long fileSize) {
-        // Not used when R2 direct upload is enabled — kept for API compatibility
-        String key = "workspaces/" + workspaceId + "/" + UUID.randomUUID() + "/" + fileName;
+        String ext = fileName.contains(".") ? fileName.substring(fileName.lastIndexOf('.')) : "";
+        String storedName = UUID.randomUUID() + ext;
+        String key = "workspaces/" + workspaceId + "/" + storedName;
+
         Workspace workspace = workspaceService.getWorkspace(workspaceId);
         User uploader = userService.getUserById(userId);
+
+        String resolvedContentType = (contentType != null && !contentType.isBlank())
+            ? contentType : "application/octet-stream";
+        if ("image/jpg".equalsIgnoreCase(resolvedContentType)) resolvedContentType = "image/jpeg";
+
+        String publicUrl;
+        String presignedUrl;
+
+        if (r2StorageService.isEnabled()) {
+            // Generate a 15-minute presigned PUT URL for direct browser-to-R2 upload
+            presignedUrl = r2StorageService.generatePresignedPutUrl(key, resolvedContentType, 900);
+            // Compute the public URL the asset will have after upload
+            publicUrl = r2StorageService.resolvePublicUrl(key);
+        } else {
+            presignedUrl = "";
+            publicUrl = "/static/uploads/" + key;
+        }
+
         MediaAsset asset = MediaAsset.builder()
             .workspace(workspace).uploadedBy(uploader)
-            .fileName(fileName).originalName(fileName)
-            .contentType(contentType).fileSize(fileSize)
-            .s3Key(key).url("/static/uploads/" + key)
+            .fileName(storedName).originalName(fileName)
+            .contentType(resolvedContentType).fileSize(fileSize)
+            .s3Key(key).url(publicUrl)
+            .thumbnailUrl(publicUrl)
             .source(MediaSource.UPLOAD).build();
         MediaAsset saved = mediaAssetRepository.save(asset);
-        return Map.of("uploadUrl", "", "assetId", saved.getId(), "s3Key", key);
+
+        return Map.of("uploadUrl", presignedUrl, "assetId", saved.getId(), "s3Key", key);
     }
 
     @Transactional
