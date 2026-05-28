@@ -58,16 +58,70 @@ public class InstagramService implements SocialMediaService {
             throw new CustomExceptions.ExternalApiException("Instagram account not connected");
         }
 
-        // Instagram Graph API: create container then publish
-        String caption = scheduledPost.getPost().getCaption();
+        String igUserId    = account.getAccountId();
         String accessToken = account.getAccessToken();
+        String caption     = scheduledPost.getPost().getCaption();
 
         log.info("Publishing post {} to Instagram account {}", scheduledPost.getId(), account.getHandle());
 
-        // In production: call Instagram Graph API
-        // POST /{ig-user-id}/media → get container_id
-        // POST /{ig-user-id}/media_publish?creation_id={container_id}
-        return "ig_" + System.currentTimeMillis(); // stub external ID
+        try (CloseableHttpClient http = HttpClients.createDefault()) {
+
+            // Step 1: create media container (TEXT-only post)
+            HttpPost containerRequest = new HttpPost(
+                "https://graph.instagram.com/v19.0/" + igUserId + "/media"
+            );
+            List<NameValuePair> containerParams = new java.util.ArrayList<>(List.of(
+                new BasicNameValuePair("caption", caption != null ? caption : ""),
+                new BasicNameValuePair("access_token", accessToken)
+            ));
+
+            // Attach image if present
+            List<com.buildme.model.MediaAsset> assets = scheduledPost.getPost().getMediaAssets();
+            if (assets != null && !assets.isEmpty()) {
+                com.buildme.model.MediaAsset first = assets.get(0);
+                String mediaUrl = first.getUrl();
+                if (first.getContentType() != null && first.getContentType().startsWith("video/")) {
+                    containerParams.add(new BasicNameValuePair("media_type", "REELS"));
+                    containerParams.add(new BasicNameValuePair("video_url", mediaUrl));
+                } else {
+                    containerParams.add(new BasicNameValuePair("image_url", mediaUrl));
+                }
+            }
+
+            containerRequest.setEntity(new UrlEncodedFormEntity(containerParams));
+            String containerJson = http.execute(containerRequest, r -> EntityUtils.toString(r.getEntity()));
+            JsonNode containerNode = objectMapper.readTree(containerJson);
+
+            if (containerNode.has("error")) {
+                throw new CustomExceptions.ExternalApiException(
+                    "Instagram container creation failed: " + containerNode.path("error").path("message").asText("unknown error"));
+            }
+
+            String containerId = containerNode.path("id").asText();
+            if (containerId.isBlank()) {
+                throw new CustomExceptions.ExternalApiException("Instagram returned empty container id");
+            }
+
+            // Step 2: publish the container
+            HttpPost publishRequest = new HttpPost(
+                "https://graph.instagram.com/v19.0/" + igUserId + "/media_publish"
+            );
+            publishRequest.setEntity(new UrlEncodedFormEntity(List.of(
+                new BasicNameValuePair("creation_id", containerId),
+                new BasicNameValuePair("access_token", accessToken)
+            )));
+            String publishJson = http.execute(publishRequest, r -> EntityUtils.toString(r.getEntity()));
+            JsonNode publishNode = objectMapper.readTree(publishJson);
+
+            if (publishNode.has("error")) {
+                throw new CustomExceptions.ExternalApiException(
+                    "Instagram publish failed: " + publishNode.path("error").path("message").asText("unknown error"));
+            }
+
+            String postId = publishNode.path("id").asText();
+            log.info("Published to Instagram account {} — post id {}", account.getHandle(), postId);
+            return postId;
+        }
     }
 
     @Override
