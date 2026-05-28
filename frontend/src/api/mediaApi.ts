@@ -39,9 +39,7 @@ export const mediaApi = {
     const form = new FormData()
     form.append('file', file)
     return api
-      .post<MediaAsset>(`/workspaces/${workspaceId}/media/upload`, form, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      })
+      .post<MediaAsset>(`/workspaces/${workspaceId}/media/upload`, form)
       .then((r) => r.data)
   },
 }
