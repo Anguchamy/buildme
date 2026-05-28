@@ -14,10 +14,11 @@ import java.util.List;
 public interface ScheduledPostRepository extends JpaRepository<ScheduledPost, Long> {
 
     @Query("""
-        SELECT sp FROM ScheduledPost sp
+        SELECT DISTINCT sp FROM ScheduledPost sp
         LEFT JOIN FETCH sp.socialAccount
         LEFT JOIN FETCH sp.post p
         LEFT JOIN FETCH p.author
+        LEFT JOIN FETCH p.mediaAssets
         WHERE sp.status = :status
         AND sp.scheduledTime <= :before
         ORDER BY sp.scheduledTime ASC
@@ -30,10 +31,11 @@ public interface ScheduledPostRepository extends JpaRepository<ScheduledPost, Lo
     List<ScheduledPost> findByPostId(Long postId);
 
     @Query("""
-        SELECT sp FROM ScheduledPost sp
+        SELECT DISTINCT sp FROM ScheduledPost sp
         LEFT JOIN FETCH sp.socialAccount
         LEFT JOIN FETCH sp.post p
         LEFT JOIN FETCH p.author
+        LEFT JOIN FETCH p.mediaAssets
         WHERE sp.status = :status
         AND sp.nextRetryAt IS NOT NULL
         AND sp.nextRetryAt <= :before
