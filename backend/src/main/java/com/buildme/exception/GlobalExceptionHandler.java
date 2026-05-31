@@ -1,8 +1,10 @@
 package com.buildme.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.catalina.connector.ClientAbortException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -12,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.io.IOException;
 import java.time.OffsetDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -109,10 +112,51 @@ public class GlobalExceptionHandler {
             .body(new ErrorResponse(405, "Method Not Allowed", ex.getMessage()));
     }
 
+    /**
+     * Client disconnected mid-response (closed tab, navigated away, mobile sleep).
+     * Most common on SSE /notifications/stream. Log at debug only and return null
+     * so Spring doesn't try to write an error body to a dead socket — which would
+     * cascade into "No converter for ErrorResponse with preset Content-Type
+     * 'text/event-stream'" noise.
+     */
+    @ExceptionHandler(ClientAbortException.class)
+    public ResponseEntity<Void> handleClientAbort(ClientAbortException ex) {
+        log.debug("Client aborted connection: {}", ex.getMessage());
+        return null;
+    }
+
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleGeneral(Exception ex, HttpServletResponse response) {
+        // If the underlying cause is a broken pipe / client abort, treat it as
+        // a benign disconnect rather than a 500. The response is also already
+        // committed by then, so we can't write a body even if we wanted to.
+        if (isBrokenPipe(ex)) {
+            log.debug("Client aborted connection (broken pipe): {}", ex.getMessage());
+            return null;
+        }
+        if (response != null && response.isCommitted()) {
+            // Response already started streaming (typical for SSE / file streaming).
+            // Trying to ResponseEntity our way out will only produce the
+            // "No converter for ErrorResponse with preset Content-Type" warning.
+            log.warn("Unhandled exception after response committed: {}", ex.toString());
+            return null;
+        }
         log.error("Unhandled exception", ex);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
             .body(new ErrorResponse(500, "Internal Server Error", "An unexpected error occurred"));
+    }
+
+    private static boolean isBrokenPipe(Throwable ex) {
+        Throwable cur = ex;
+        while (cur != null) {
+            if (cur instanceof ClientAbortException) return true;
+            if (cur instanceof IOException
+                && cur.getMessage() != null
+                && cur.getMessage().toLowerCase().contains("broken pipe")) {
+                return true;
+            }
+            cur = cur.getCause();
+        }
+        return false;
     }
 }
