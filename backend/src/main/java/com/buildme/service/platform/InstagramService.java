@@ -8,6 +8,7 @@ import com.buildme.model.Workspace;
 import com.buildme.repository.SocialAccountRepository;
 import com.buildme.repository.WorkspaceRepository;
 import com.buildme.service.R2StorageService;
+import com.buildme.util.MediaTokenUtil;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +39,10 @@ public class InstagramService implements SocialMediaService {
     private final WorkspaceRepository workspaceRepository;
     private final ObjectMapper objectMapper;
     private final R2StorageService r2StorageService;
+    private final MediaTokenUtil mediaTokenUtil;
+
+    @Value("${app.backend.url:}")
+    private String backendUrl;
 
     @Value("${app.oauth.instagram.client-id:}")
     private String clientId;
@@ -99,6 +104,25 @@ public class InstagramService implements SocialMediaService {
             }
             log.info("Instagram publish: handing IG media url for asset {} ({} bytes, {})",
                 first.getId(), first.getFileSize(), first.getContentType());
+            // Probe the URL ourselves so we can see what IG would see. If R2
+            // returns something other than 200 + an image/* Content-Type then
+            // IG will reject with "Only photo or video can be accepted as
+            // media type" and the real root cause is on R2's side, not IG's.
+            try (CloseableHttpClient probe = HttpClients.createDefault()) {
+                org.apache.hc.client5.http.classic.methods.HttpHead head =
+                    new org.apache.hc.client5.http.classic.methods.HttpHead(mediaUrl);
+                probe.execute(head, r -> {
+                    String ct = r.getFirstHeader("Content-Type") != null
+                        ? r.getFirstHeader("Content-Type").getValue() : "(none)";
+                    String cl = r.getFirstHeader("Content-Length") != null
+                        ? r.getFirstHeader("Content-Length").getValue() : "(none)";
+                    log.info("Instagram media URL probe: HTTP {} Content-Type={} Content-Length={}",
+                        r.getCode(), ct, cl);
+                    return null;
+                });
+            } catch (Exception probeEx) {
+                log.warn("Could not probe IG media URL: {}", probeEx.getMessage());
+            }
             if (first.getContentType() != null && first.getContentType().startsWith("video/")) {
                 containerParams.add(new BasicNameValuePair("media_type", "REELS"));
                 containerParams.add(new BasicNameValuePair("video_url", mediaUrl));
@@ -158,25 +182,29 @@ public class InstagramService implements SocialMediaService {
     }
 
     private String resolvePublicMediaUrl(com.buildme.model.MediaAsset asset) {
+        // Preferred: route IG through our own backend's public media endpoint.
+        // We control the Content-Type and bytes end-to-end, avoiding R2
+        // presigned-URL quirks that kept making IG reject with "Only photo or
+        // video can be accepted as media type". Requires app.backend.url to
+        // be set to the externally-reachable base URL (e.g. Render URL).
+        if (backendUrl != null && !backendUrl.isBlank()) {
+            String token = mediaTokenUtil.issue(asset.getId(), 86_400);
+            return backendUrl.replaceAll("/+$", "")
+                + "/api/public/media/" + asset.getId() + "?t=" + token;
+        }
+        // Fallback: directly hand R2 to IG. Works only if R2 is configured
+        // with a public-url, or if R2's response-content-type override happens
+        // to play nicely (often it doesn't, hence the dedicated endpoint above).
         if (r2StorageService.isEnabled() && asset.getS3Key() != null && !asset.getS3Key().isBlank()) {
             if (r2StorageService.hasPublicUrl()) {
                 return r2StorageService.resolvePublicUrl(asset.getS3Key());
             }
-            // Pin the response Content-Type so R2 serves the object as the
-            // asset's stored MIME (e.g. image/jpeg) instead of whatever was
-            // recorded at upload time. IG rejects with "Only photo or video
-            // can be accepted as media type" when the response Content-Type
-            // is octet-stream / wrong, even if the bytes are a valid JPEG.
-            // 24h expiry — IG's ingestion can take a while and may retry.
             String contentType = asset.getContentType();
             if (contentType == null || contentType.isBlank()) {
                 contentType = "image/jpeg";
             }
             return r2StorageService.generatePresignedGetUrl(asset.getS3Key(), 86_400, contentType);
         }
-        // Local-disk or non-R2 storage — fall back to whatever URL was stored.
-        // (Instagram cannot fetch http://localhost URLs; in that case the user
-        // needs to deploy with R2 configured.)
         return asset.getUrl();
     }
 

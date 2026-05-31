@@ -47,6 +47,9 @@ public class SecurityConfig {
         "/api/auth/verify-email",
         "/api/auth/resend-verification",
         "/api/razorpay/webhook",
+        // Public token-gated media endpoint for external ingestion (IG etc).
+        // Token verification happens inside the controller.
+        "/api/public/media/**",
         "/static/uploads/**",
         "/swagger-ui/**",
         "/swagger-ui.html",
