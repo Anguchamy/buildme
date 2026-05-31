@@ -123,6 +123,20 @@ public class R2StorageService {
      * Valid for the given number of seconds.
      */
     public String generatePresignedGetUrl(String key, int expiresSeconds) {
+        return generatePresignedGetUrl(key, expiresSeconds, null);
+    }
+
+    /**
+     * Same as {@link #generatePresignedGetUrl(String, int)} but lets callers
+     * pin the response Content-Type via the S3 `response-content-type` query
+     * parameter. Important for Instagram ingestion — IG's server-side fetch
+     * rejects with "Only photo or video can be accepted as media type" when
+     * the response Content-Type is application/octet-stream or anything
+     * other than a recognised image/video MIME. R2 stores whatever
+     * Content-Type was sent on upload; this override forces the right one
+     * even if the upload stored it wrong.
+     */
+    public String generatePresignedGetUrl(String key, int expiresSeconds, String responseContentType) {
         try {
             ZonedDateTime now = ZonedDateTime.now(ZoneOffset.UTC);
             String datetime = now.format(DT_FMT);
@@ -133,13 +147,19 @@ public class R2StorageService {
             String scope      = date + "/auto/s3/aws4_request";
             String credential = accessKey + "/" + scope;
 
-            String queryString =
-                "X-Amz-Algorithm=AWS4-HMAC-SHA256" +
-                "&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD" +
-                "&X-Amz-Credential=" + urlEncode(credential) +
-                "&X-Amz-Date=" + datetime +
-                "&X-Amz-Expires=" + expiresSeconds +
-                "&X-Amz-SignedHeaders=host";
+            // Build canonical query string with params in alphabetical order.
+            // response-content-type comes before the X-Amz-* group.
+            StringBuilder qs = new StringBuilder();
+            if (responseContentType != null && !responseContentType.isBlank()) {
+                qs.append("response-content-type=").append(urlEncode(responseContentType)).append('&');
+            }
+            qs.append("X-Amz-Algorithm=AWS4-HMAC-SHA256")
+              .append("&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD")
+              .append("&X-Amz-Credential=").append(urlEncode(credential))
+              .append("&X-Amz-Date=").append(datetime)
+              .append("&X-Amz-Expires=").append(expiresSeconds)
+              .append("&X-Amz-SignedHeaders=host");
+            String queryString = qs.toString();
 
             String canonicalHeaders = "host:" + host + "\n";
             String signedHeaders = "host";

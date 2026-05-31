@@ -162,9 +162,17 @@ public class InstagramService implements SocialMediaService {
             if (r2StorageService.hasPublicUrl()) {
                 return r2StorageService.resolvePublicUrl(asset.getS3Key());
             }
-            // 24h expiry — IG's ingestion can take a while and may retry; the
-            // signed URL must outlive any plausible processing window.
-            return r2StorageService.generatePresignedGetUrl(asset.getS3Key(), 86_400);
+            // Pin the response Content-Type so R2 serves the object as the
+            // asset's stored MIME (e.g. image/jpeg) instead of whatever was
+            // recorded at upload time. IG rejects with "Only photo or video
+            // can be accepted as media type" when the response Content-Type
+            // is octet-stream / wrong, even if the bytes are a valid JPEG.
+            // 24h expiry — IG's ingestion can take a while and may retry.
+            String contentType = asset.getContentType();
+            if (contentType == null || contentType.isBlank()) {
+                contentType = "image/jpeg";
+            }
+            return r2StorageService.generatePresignedGetUrl(asset.getS3Key(), 86_400, contentType);
         }
         // Local-disk or non-R2 storage — fall back to whatever URL was stored.
         // (Instagram cannot fetch http://localhost URLs; in that case the user
