@@ -44,6 +44,12 @@ public class InstagramService implements SocialMediaService {
     @Value("${app.backend.url:}")
     private String backendUrl;
 
+    @jakarta.annotation.PostConstruct
+    public void logConfig() {
+        log.info("InstagramService initialized — app.backend.url={}",
+            (backendUrl == null || backendUrl.isBlank()) ? "(unset, will fall back to R2 URL)" : backendUrl);
+    }
+
     @Value("${app.oauth.instagram.client-id:}")
     private String clientId;
 
@@ -102,22 +108,33 @@ public class InstagramService implements SocialMediaService {
                 throw new CustomExceptions.ExternalApiException(
                     "Media asset has no URL — cannot publish to Instagram.");
             }
-            log.info("Instagram publish: handing IG media url for asset {} ({} bytes, {})",
-                first.getId(), first.getFileSize(), first.getContentType());
-            // Probe the URL ourselves so we can see what IG would see. If R2
-            // returns something other than 200 + an image/* Content-Type then
-            // IG will reject with "Only photo or video can be accepted as
-            // media type" and the real root cause is on R2's side, not IG's.
+            log.info("Instagram publish: handing IG media url for asset {} ({} bytes, {}) url={}",
+                first.getId(), first.getFileSize(), first.getContentType(), mediaUrl);
+            // Probe the URL ourselves so we can see what IG would see. Use a
+            // GET (not HEAD) and read a snippet of the body when non-200 so
+            // we can diagnose Spring 400s / WAF blocks / signature mismatches
+            // without having to curl from outside.
             try (CloseableHttpClient probe = HttpClients.createDefault()) {
-                org.apache.hc.client5.http.classic.methods.HttpHead head =
-                    new org.apache.hc.client5.http.classic.methods.HttpHead(mediaUrl);
-                probe.execute(head, r -> {
+                org.apache.hc.client5.http.classic.methods.HttpGet probeReq =
+                    new org.apache.hc.client5.http.classic.methods.HttpGet(mediaUrl);
+                probe.execute(probeReq, r -> {
                     String ct = r.getFirstHeader("Content-Type") != null
                         ? r.getFirstHeader("Content-Type").getValue() : "(none)";
                     String cl = r.getFirstHeader("Content-Length") != null
                         ? r.getFirstHeader("Content-Length").getValue() : "(none)";
-                    log.info("Instagram media URL probe: HTTP {} Content-Type={} Content-Length={}",
-                        r.getCode(), ct, cl);
+                    int code = r.getCode();
+                    if (code >= 400) {
+                        String body = "";
+                        try {
+                            body = EntityUtils.toString(r.getEntity());
+                            if (body.length() > 500) body = body.substring(0, 500) + "...";
+                        } catch (Exception ignore) {}
+                        log.warn("Instagram media URL probe: HTTP {} Content-Type={} body={}",
+                            code, ct, body);
+                    } else {
+                        log.info("Instagram media URL probe: HTTP {} Content-Type={} Content-Length={}",
+                            code, ct, cl);
+                    }
                     return null;
                 });
             } catch (Exception probeEx) {
@@ -188,9 +205,15 @@ public class InstagramService implements SocialMediaService {
         // video can be accepted as media type". Requires app.backend.url to
         // be set to the externally-reachable base URL (e.g. Render URL).
         if (backendUrl != null && !backendUrl.isBlank()) {
+            String base = backendUrl.replaceAll("/+$", "");
+            if (!base.startsWith("http://") && !base.startsWith("https://")) {
+                // Defensive: if someone set APP_BACKEND_URL without a scheme
+                // we'd otherwise build a path-only "host.com/api/..." which
+                // Apache HttpClient and IG both fail to fetch.
+                base = "https://" + base;
+            }
             String token = mediaTokenUtil.issue(asset.getId(), 86_400);
-            return backendUrl.replaceAll("/+$", "")
-                + "/api/public/media/" + asset.getId() + "?t=" + token;
+            return base + "/api/public/media/" + asset.getId() + "?t=" + token;
         }
         // Fallback: directly hand R2 to IG. Works only if R2 is configured
         // with a public-url, or if R2's response-content-type override happens
