@@ -12,6 +12,7 @@ import com.buildme.repository.PostRepository;
 import com.buildme.repository.ScheduledPostRepository;
 import com.buildme.repository.SocialAccountRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -21,6 +22,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PostService {
 
     private final PostRepository postRepository;
@@ -41,12 +43,26 @@ public class PostService {
             mediaAssets = mediaAssetRepository.findAllById(request.mediaAssetIds());
         }
 
+        // "Post Now" from the composer sends status=PUBLISHED. Treat that as
+        // SCHEDULED with scheduledAt=now so the scheduler creates ScheduledPost
+        // rows per platform and actually pushes to the social networks on its
+        // next tick. Previously we'd just save a Post row labelled PUBLISHED
+        // and never call any platform service — the UI showed Published but
+        // nothing actually went to Twitter / Instagram / LinkedIn.
+        PostStatus requestedStatus = request.status() != null ? request.status() : PostStatus.DRAFT;
+        boolean postNow = requestedStatus == PostStatus.PUBLISHED;
+        OffsetDateTime scheduledAt = request.scheduledAt();
+        if (postNow) {
+            scheduledAt = OffsetDateTime.now();
+            requestedStatus = PostStatus.SCHEDULED;
+        }
+
         Post post = Post.builder()
             .workspace(workspace)
             .author(author)
             .caption(request.caption())
-            .status(request.status() != null ? request.status() : PostStatus.DRAFT)
-            .scheduledAt(request.scheduledAt())
+            .status(requestedStatus)
+            .scheduledAt(scheduledAt)
             .platforms(request.platforms())
             .gridPosition(request.gridPosition())
             .notes(request.notes())
@@ -87,8 +103,18 @@ public class PostService {
 
         if (request.caption() != null) post.setCaption(request.caption());
         if (request.platforms() != null) post.setPlatforms(request.platforms());
-        if (request.status() != null) post.setStatus(request.status());
-        if (request.scheduledAt() != null) post.setScheduledAt(request.scheduledAt());
+        // "Post Now" path also reaches here for edits of existing drafts; same
+        // PUBLISHED→SCHEDULED+now translation as in create() so the scheduler
+        // can actually push to platforms.
+        boolean postNow = request.status() == PostStatus.PUBLISHED;
+        if (request.status() != null) {
+            post.setStatus(postNow ? PostStatus.SCHEDULED : request.status());
+        }
+        if (postNow) {
+            post.setScheduledAt(OffsetDateTime.now());
+        } else if (request.scheduledAt() != null) {
+            post.setScheduledAt(request.scheduledAt());
+        }
         if (request.gridPosition() != null) post.setGridPosition(request.gridPosition());
         if (request.notes() != null) post.setNotes(request.notes());
 
@@ -98,6 +124,15 @@ public class PostService {
         }
 
         Post saved = postRepository.save(post);
+
+        // If this edit transitioned the post into SCHEDULED (either via the
+        // explicit Schedule action or via Post Now), make sure ScheduledPost
+        // rows exist so the scheduler picks it up. Without this, editing a
+        // draft to PUBLISHED would silently do nothing.
+        if (saved.getStatus() == PostStatus.SCHEDULED && saved.getScheduledAt() != null) {
+            createScheduledPosts(saved);
+        }
+
         return toResponse(saved);
     }
 
@@ -121,6 +156,9 @@ public class PostService {
     }
 
     private void createScheduledPosts(Post post) {
+        log.info("Creating scheduled posts for post {} ({} platforms, scheduledAt={})",
+            post.getId(), post.getPlatforms().size(), post.getScheduledAt());
+
         // Cancel any existing pending scheduled posts
         scheduledPostRepository.findByPostId(post.getId())
             .stream()
@@ -130,12 +168,14 @@ public class PostService {
                 scheduledPostRepository.save(sp);
             });
 
+        int created = 0;
         // Create new scheduled posts per platform
         for (String platformStr : post.getPlatforms()) {
             Platform platform;
             try {
                 platform = Platform.valueOf(platformStr);
             } catch (IllegalArgumentException e) {
+                log.warn("Skipping unknown platform '{}' on post {}", platformStr, post.getId());
                 continue;
             }
 
@@ -143,6 +183,10 @@ public class PostService {
                 .findByWorkspaceIdAndPlatform(post.getWorkspace().getId(), platform);
 
             SocialAccount account = accounts.isEmpty() ? null : accounts.get(0);
+            if (account == null) {
+                log.warn("No connected {} account for workspace {} — ScheduledPost will be created but will fail at publish time",
+                    platform, post.getWorkspace().getId());
+            }
 
             ScheduledPost scheduledPost = ScheduledPost.builder()
                 .post(post)
@@ -153,7 +197,9 @@ public class PostService {
                 .build();
 
             scheduledPostRepository.save(scheduledPost);
+            created++;
         }
+        log.info("Created {} ScheduledPost rows for post {}", created, post.getId());
     }
 
     public Post getPost(Long id) {

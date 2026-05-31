@@ -58,11 +58,18 @@ public class SchedulerService {
             List<ScheduledPost> duePosts = scheduledPostRepository
                 .findByStatusAndScheduledTimeBefore(ScheduledPostStatus.PENDING, OffsetDateTime.now());
 
+            if (!duePosts.isEmpty()) {
+                log.info("Scheduler: found {} due PENDING ScheduledPost rows", duePosts.size());
+            }
+
             for (ScheduledPost sp : duePosts) {
                 if (processed.get() >= MAX_POSTS_PER_RUN) {
                     log.warn("Scheduler: reached max posts per run ({}), deferring rest", MAX_POSTS_PER_RUN);
                     break;
                 }
+                log.info("Scheduler: picking up due post {} on {} (scheduledTime={}, account={})",
+                    sp.getPost().getId(), sp.getPlatform(), sp.getScheduledTime(),
+                    sp.getSocialAccount() != null ? sp.getSocialAccount().getHandle() : "(none)");
                 processPost(sp);
                 processed.incrementAndGet();
             }
