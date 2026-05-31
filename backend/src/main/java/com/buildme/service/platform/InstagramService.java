@@ -66,9 +66,10 @@ public class InstagramService implements SocialMediaService {
 
         try (CloseableHttpClient http = HttpClients.createDefault()) {
 
-            // Step 1: create media container (TEXT-only post)
+            // Step 1: create media container. Use graph.facebook.com because we store
+            // the Facebook Page access token (required for IG Business publishing).
             HttpPost containerRequest = new HttpPost(
-                "https://graph.instagram.com/v19.0/" + igUserId + "/media"
+                "https://graph.facebook.com/v19.0/" + igUserId + "/media"
             );
             List<NameValuePair> containerParams = new java.util.ArrayList<>(List.of(
                 new BasicNameValuePair("caption", caption != null ? caption : ""),
@@ -102,9 +103,18 @@ public class InstagramService implements SocialMediaService {
                 throw new CustomExceptions.ExternalApiException("Instagram returned empty container id");
             }
 
+            // For video/REELS the container needs time to finish processing before publish.
+            // Poll status_code until FINISHED (or fail), with a hard cap.
+            boolean isVideo = assets != null && !assets.isEmpty()
+                && assets.get(0).getContentType() != null
+                && assets.get(0).getContentType().startsWith("video/");
+            if (isVideo) {
+                waitForContainerReady(http, containerId, accessToken);
+            }
+
             // Step 2: publish the container
             HttpPost publishRequest = new HttpPost(
-                "https://graph.instagram.com/v19.0/" + igUserId + "/media_publish"
+                "https://graph.facebook.com/v19.0/" + igUserId + "/media_publish"
             );
             publishRequest.setEntity(new UrlEncodedFormEntity(List.of(
                 new BasicNameValuePair("creation_id", containerId),
@@ -122,6 +132,29 @@ public class InstagramService implements SocialMediaService {
             log.info("Published to Instagram account {} — post id {}", account.getHandle(), postId);
             return postId;
         }
+    }
+
+    private void waitForContainerReady(CloseableHttpClient http, String containerId, String accessToken) throws Exception {
+        int maxAttempts = 30;          // ~5 minutes worst case
+        long sleepMs = 10_000L;
+        for (int i = 0; i < maxAttempts; i++) {
+            HttpGet statusReq = new HttpGet(
+                "https://graph.facebook.com/v19.0/" + containerId
+                + "?fields=status_code,status"
+                + "&access_token=" + accessToken
+            );
+            String json = http.execute(statusReq, r -> EntityUtils.toString(r.getEntity()));
+            JsonNode node = objectMapper.readTree(json);
+            String code = node.path("status_code").asText("");
+            if ("FINISHED".equals(code)) return;
+            if ("ERROR".equals(code) || "EXPIRED".equals(code)) {
+                throw new CustomExceptions.ExternalApiException(
+                    "Instagram media container " + code + ": " + node.path("status").asText(""));
+            }
+            Thread.sleep(sleepMs);
+        }
+        throw new CustomExceptions.ExternalApiException(
+            "Instagram media container did not finish processing in time");
     }
 
     @Override
@@ -191,6 +224,7 @@ public class InstagramService implements SocialMediaService {
             String igUserId = null;
             String igUsername = null;
             String displayName = null;
+            String publishingToken = null; // the Page access token tied to the IG Business account
 
             // 3. For each page, fetch linked Instagram business account
             for (JsonNode page : pages) {
@@ -205,6 +239,7 @@ public class InstagramService implements SocialMediaService {
                 JsonNode igNode = objectMapper.readTree(igJson).path("instagram_business_account");
                 if (!igNode.isMissingNode() && igNode.has("id")) {
                     igUserId = igNode.path("id").asText();
+                    publishingToken = pageToken;
                     // Fetch username separately
                     HttpGet igProfileRequest = new HttpGet(
                         "https://graph.facebook.com/v19.0/" + igUserId
@@ -242,11 +277,13 @@ public class InstagramService implements SocialMediaService {
             account.setAccountId(igUserId);
             account.setHandle(igUsername);
             account.setDisplayName(displayName);
-            account.setAccessToken(accessToken);
+            // Save the Page access token — that's what graph.facebook.com requires for
+            // IG Business publishing. Page tokens derived from a long-lived user token
+            // do not expire as long as the user token stays valid.
+            account.setAccessToken(publishingToken);
             account.setConnected(true);
-            // Facebook user tokens are long-lived (60 days)
             account.setTokenExpiresAt(OffsetDateTime.now().plusDays(60));
-            account.setScopes("instagram_business_basic,instagram_manage_comments,instagram_content_publish");
+            account.setScopes("instagram_basic,instagram_content_publish,pages_read_engagement,pages_show_list");
 
             socialAccountRepository.save(account);
             log.info("Instagram Business account @{} connected for workspace {}", igUsername, workspaceId);
@@ -260,30 +297,10 @@ public class InstagramService implements SocialMediaService {
 
     @Override
     public void refreshTokenIfNeeded(Long socialAccountId) {
-        // Instagram long-lived tokens expire in 60 days; refresh if < 7 days left
-        socialAccountRepository.findById(socialAccountId).ifPresent(account -> {
-            if (account.getTokenExpiresAt() != null
-                && account.getTokenExpiresAt().isBefore(OffsetDateTime.now().plusDays(7))) {
-                try (CloseableHttpClient http = HttpClients.createDefault()) {
-                    HttpGet req = new HttpGet(
-                        "https://graph.instagram.com/refresh_access_token"
-                        + "?grant_type=ig_refresh_token"
-                        + "&access_token=" + account.getAccessToken()
-                    );
-                    String json = http.execute(req, r -> EntityUtils.toString(r.getEntity()));
-                    JsonNode node = objectMapper.readTree(json);
-                    String newToken = node.path("access_token").asText();
-                    long expiresIn = node.path("expires_in").asLong(5184000);
-                    if (!newToken.isBlank()) {
-                        account.setAccessToken(newToken);
-                        account.setTokenExpiresAt(OffsetDateTime.now().plusSeconds(expiresIn));
-                        socialAccountRepository.save(account);
-                        log.info("Refreshed Instagram token for account {}", socialAccountId);
-                    }
-                } catch (Exception e) {
-                    log.warn("Failed to refresh Instagram token for account {}: {}", socialAccountId, e.getMessage());
-                }
-            }
-        });
+        // We persist a Facebook Page access token (derived from a long-lived user token)
+        // for IG Business publishing. Page tokens have no expiry of their own — they
+        // remain valid as long as the parent user token does. If the user token is
+        // invalidated, the user must re-OAuth; there is no automatic refresh path.
+        log.debug("Instagram refresh is a no-op for Page access tokens (account {})", socialAccountId);
     }
 }
