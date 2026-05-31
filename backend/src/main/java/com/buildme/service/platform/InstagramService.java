@@ -64,6 +64,15 @@ public class InstagramService implements SocialMediaService {
 
         log.info("Publishing post {} to Instagram account {}", scheduledPost.getId(), account.getHandle());
 
+        // Instagram Graph API does not support text-only posts — every post must
+        // contain an image or video. Fail fast with a clear message so the user
+        // knows to attach media instead of cycling through 3 retries.
+        List<com.buildme.model.MediaAsset> assets = scheduledPost.getPost().getMediaAssets();
+        if (assets == null || assets.isEmpty()) {
+            throw new CustomExceptions.ExternalApiException(
+                "Instagram requires an image or video. Attach a media asset to this post.");
+        }
+
         try (CloseableHttpClient http = HttpClients.createDefault()) {
 
             // Step 1: create media container. Use graph.facebook.com because we store
@@ -76,17 +85,17 @@ public class InstagramService implements SocialMediaService {
                 new BasicNameValuePair("access_token", accessToken)
             ));
 
-            // Attach image if present
-            List<com.buildme.model.MediaAsset> assets = scheduledPost.getPost().getMediaAssets();
-            if (assets != null && !assets.isEmpty()) {
-                com.buildme.model.MediaAsset first = assets.get(0);
-                String mediaUrl = first.getUrl();
-                if (first.getContentType() != null && first.getContentType().startsWith("video/")) {
-                    containerParams.add(new BasicNameValuePair("media_type", "REELS"));
-                    containerParams.add(new BasicNameValuePair("video_url", mediaUrl));
-                } else {
-                    containerParams.add(new BasicNameValuePair("image_url", mediaUrl));
-                }
+            com.buildme.model.MediaAsset first = assets.get(0);
+            String mediaUrl = first.getUrl();
+            if (mediaUrl == null || mediaUrl.isBlank()) {
+                throw new CustomExceptions.ExternalApiException(
+                    "Media asset has no URL — cannot publish to Instagram.");
+            }
+            if (first.getContentType() != null && first.getContentType().startsWith("video/")) {
+                containerParams.add(new BasicNameValuePair("media_type", "REELS"));
+                containerParams.add(new BasicNameValuePair("video_url", mediaUrl));
+            } else {
+                containerParams.add(new BasicNameValuePair("image_url", mediaUrl));
             }
 
             containerRequest.setEntity(new UrlEncodedFormEntity(containerParams));
@@ -105,9 +114,8 @@ public class InstagramService implements SocialMediaService {
 
             // For video/REELS the container needs time to finish processing before publish.
             // Poll status_code until FINISHED (or fail), with a hard cap.
-            boolean isVideo = assets != null && !assets.isEmpty()
-                && assets.get(0).getContentType() != null
-                && assets.get(0).getContentType().startsWith("video/");
+            boolean isVideo = first.getContentType() != null
+                && first.getContentType().startsWith("video/");
             if (isVideo) {
                 waitForContainerReady(http, containerId, accessToken);
             }
