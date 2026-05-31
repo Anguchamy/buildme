@@ -17,10 +17,14 @@ public class SpaController {
         return "forward:/index.html";
     }
 
-    /** Handles HEAD / used by Render health checks — returns 200 without body. */
-    @RequestMapping(value = "/", method = RequestMethod.HEAD)
+    /**
+     * Health probe for `/`. Accept both HEAD (Render's default) and GET — without
+     * the GET handler, anything that probes with GET (browsers visiting the bare
+     * hostname, default curl, some uptime checkers) gets a noisy 405 logged.
+     */
+    @RequestMapping(value = "/", method = { RequestMethod.HEAD, RequestMethod.GET })
     @ResponseBody
-    public ResponseEntity<Void> healthHead() {
+    public ResponseEntity<Void> healthRoot() {
         return ResponseEntity.ok().build();
     }
 }
