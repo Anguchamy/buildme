@@ -22,7 +22,7 @@ export default function PostCard({ post, onClick }: Props) {
     >
       {firstAsset && (
         <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-surface-3">
-          <AuthenticatedImage src={mediaApi.getFileUrl(workspaceId, firstAsset.id)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+          <AuthenticatedImage src={firstAsset.url ?? mediaApi.getFileUrl(workspaceId, firstAsset.id)} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         </div>
       )}
 

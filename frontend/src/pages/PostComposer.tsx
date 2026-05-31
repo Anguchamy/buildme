@@ -356,7 +356,7 @@ export default function PostComposer({ onClose }: PostComposerProps = {}) {
                       <div className="w-full h-full bg-surface-3 flex items-center justify-center text-xl">🎬</div>
                     ) : (
                       <AuthenticatedImage
-                        src={mediaApi.getFileUrl(workspaceId!, a.id)}
+                        src={a.url ?? mediaApi.getFileUrl(workspaceId!, a.id)}
                         alt=""
                         className="w-full h-full object-cover"
                       />
