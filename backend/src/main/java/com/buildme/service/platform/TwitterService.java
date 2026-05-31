@@ -63,7 +63,16 @@ public class TwitterService implements SocialMediaService {
             throw new CustomExceptions.ExternalApiException("Twitter account not connected");
         }
 
-        String accessToken = scheduledPost.getSocialAccount().getAccessToken();
+        // Twitter OAuth 2.0 user-context tokens expire in ~2 hours. Refresh
+        // proactively before publishing or we'll just get 401 on the tweet
+        // create call and burn retries for nothing.
+        refreshTokenIfNeeded(scheduledPost.getSocialAccount().getId());
+
+        // Re-read after refresh so we use the new access token if it was rotated.
+        SocialAccount refreshed = socialAccountRepository
+            .findById(scheduledPost.getSocialAccount().getId())
+            .orElse(scheduledPost.getSocialAccount());
+        String accessToken = refreshed.getAccessToken();
         String content = scheduledPost.getPost() != null ? scheduledPost.getPost().getCaption() : "";
         List<com.buildme.model.MediaAsset> assets =
             scheduledPost.getPost() != null ? scheduledPost.getPost().getMediaAssets() : null;
@@ -132,29 +141,58 @@ public class TwitterService implements SocialMediaService {
         }
 
         String mediaType = asset.getContentType() != null ? asset.getContentType() : "image/jpeg";
+        String mediaCategory;
+        if (mediaType.startsWith("video/")) {
+            mediaCategory = "tweet_video";
+        } else if (mediaType.equals("image/gif")) {
+            mediaCategory = "tweet_gif";
+        } else {
+            mediaCategory = "tweet_image";
+        }
 
-        // Upload to Twitter v1.1 media upload (simple upload for images < 5MB)
+        // Use v2 media upload. The v1.1 endpoint rejects OAuth 2.0 user-context
+        // bearer tokens (it requires OAuth 1.0a signed requests with consumer
+        // key/secret + access token/secret), which is why we kept getting 403.
+        // v2 accepts the same OAuth 2.0 bearer token we use for /2/tweets.
         HttpHeaders uploadHeaders = new HttpHeaders();
         uploadHeaders.setBearerAuth(accessToken);
+        uploadHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
 
+        org.springframework.core.io.ByteArrayResource mediaResource =
+            new org.springframework.core.io.ByteArrayResource(mediaBytes) {
+                @Override public String getFilename() {
+                    return asset.getFileName() != null ? asset.getFileName() : "upload";
+                }
+            };
         org.springframework.util.MultiValueMap<String, Object> form =
             new org.springframework.util.LinkedMultiValueMap<>();
-        form.add("media_data", Base64.getEncoder().encodeToString(mediaBytes));
-        form.add("media_type", mediaType);
+        form.add("media", mediaResource);
+        form.add("media_category", mediaCategory);
 
-        uploadHeaders.setContentType(MediaType.MULTIPART_FORM_DATA);
         HttpEntity<org.springframework.util.MultiValueMap<String, Object>> uploadRequest =
             new HttpEntity<>(form, uploadHeaders);
 
         ResponseEntity<String> uploadResponse = restTemplate.postForEntity(
-            "https://upload.twitter.com/1.1/media/upload.json", uploadRequest, String.class);
+            "https://api.x.com/2/media/upload", uploadRequest, String.class);
 
         JsonNode uploadNode = objectMapper.readTree(uploadResponse.getBody());
         if (uploadNode.has("errors")) {
             throw new CustomExceptions.ExternalApiException(
                 "Twitter media upload failed: " + uploadNode.path("errors").toString());
         }
-        return uploadNode.path("media_id_string").asText();
+        // v2 response: { "data": { "id": "...", "media_key": "..." } }
+        JsonNode data = uploadNode.path("data");
+        String mediaId = data.path("id").asText();
+        if (mediaId.isBlank()) {
+            // Fall back to media_id_string for compatibility, though v2 should
+            // always return id under data.
+            mediaId = uploadNode.path("media_id_string").asText();
+        }
+        if (mediaId.isBlank()) {
+            throw new CustomExceptions.ExternalApiException(
+                "Twitter media upload returned no media id: " + uploadResponse.getBody());
+        }
+        return mediaId;
     }
 
     @Override
