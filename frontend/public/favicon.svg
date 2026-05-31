@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <defs>
+    <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6"/>
+      <stop offset="50%" stop-color="#6366f1"/>
+      <stop offset="100%" stop-color="#0ea5e9"/>
+    </linearGradient>
+    <linearGradient id="glowGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="boltGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="100%" stop-color="#e0d4ff"/>
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="16" flood-color="#4c1d95" flood-opacity="0.5"/>
+    </filter>
+    <filter id="innerGlow">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <clipPath id="roundedRect">
+      <rect width="512" height="512" rx="110" ry="110"/>
+    </clipPath>
+  </defs>
+
+  <!-- Background rounded square -->
+  <rect width="512" height="512" rx="110" ry="110" fill="url(#bgGrad)" filter="url(#shadow)"/>
+
+  <!-- Subtle top gloss -->
+  <rect width="512" height="256" rx="110" ry="110" fill="url(#glowGrad)" clip-path="url(#roundedRect)"/>
+
+  <!-- Wrench/build tool shape -->
+  <!-- Wrench handle -->
+  <rect x="232" y="270" width="48" height="150" rx="24" fill="url(#boltGrad)" opacity="0.95"/>
+
+  <!-- Wrench head circle (top) -->
+  <circle cx="256" cy="200" r="72" fill="none" stroke="url(#boltGrad)" stroke-width="42" opacity="0.95"/>
+
+  <!-- Inner cutout of wrench head -->
+  <circle cx="256" cy="200" r="28" fill="url(#bgGrad)"/>
+
+  <!-- Subtle spark dots — top right -->
+  <circle cx="360" cy="130" r="10" fill="white" opacity="0.5"/>
+  <circle cx="385" cy="158" r="6" fill="white" opacity="0.35"/>
+  <circle cx="340" cy="108" r="6" fill="white" opacity="0.35"/>
+
+  <!-- Subtle spark dots — bottom left -->
+  <circle cx="150" cy="290" r="8" fill="white" opacity="0.4"/>
+  <circle cx="130" cy="268" r="5" fill="white" opacity="0.25"/>
+</svg>
