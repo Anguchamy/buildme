@@ -7,6 +7,7 @@ import com.buildme.model.SocialAccount;
 import com.buildme.model.Workspace;
 import com.buildme.repository.SocialAccountRepository;
 import com.buildme.repository.WorkspaceRepository;
+import com.buildme.service.R2StorageService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class InstagramService implements SocialMediaService {
     private final SocialAccountRepository socialAccountRepository;
     private final WorkspaceRepository workspaceRepository;
     private final ObjectMapper objectMapper;
+    private final R2StorageService r2StorageService;
 
     @Value("${app.oauth.instagram.client-id:}")
     private String clientId;
@@ -86,11 +88,17 @@ public class InstagramService implements SocialMediaService {
             ));
 
             com.buildme.model.MediaAsset first = assets.get(0);
-            String mediaUrl = first.getUrl();
+            // Resolve a publicly-fetchable URL for Instagram's server-side ingestion.
+            // The stored MediaAsset.url is the private R2 endpoint; if R2 is enabled
+            // we must hand IG either the public CDN URL or a presigned GET URL with
+            // a long expiry (IG retries ingestion for hours, especially for video).
+            String mediaUrl = resolvePublicMediaUrl(first);
             if (mediaUrl == null || mediaUrl.isBlank()) {
                 throw new CustomExceptions.ExternalApiException(
                     "Media asset has no URL — cannot publish to Instagram.");
             }
+            log.info("Instagram publish: handing IG media url for asset {} ({} bytes, {})",
+                first.getId(), first.getFileSize(), first.getContentType());
             if (first.getContentType() != null && first.getContentType().startsWith("video/")) {
                 containerParams.add(new BasicNameValuePair("media_type", "REELS"));
                 containerParams.add(new BasicNameValuePair("video_url", mediaUrl));
@@ -112,13 +120,12 @@ public class InstagramService implements SocialMediaService {
                 throw new CustomExceptions.ExternalApiException("Instagram returned empty container id");
             }
 
-            // For video/REELS the container needs time to finish processing before publish.
-            // Poll status_code until FINISHED (or fail), with a hard cap.
-            boolean isVideo = first.getContentType() != null
-                && first.getContentType().startsWith("video/");
-            if (isVideo) {
-                waitForContainerReady(http, containerId, accessToken);
-            }
+            // Poll status_code until the container is FINISHED for both image and
+            // video uploads. Publishing an IN_PROGRESS image container often
+            // returns a 200 and an id, but the post silently never appears on
+            // the profile — IG drops it server-side. Video/REELS takes longer
+            // so we keep the same cap (~5 min).
+            waitForContainerReady(http, containerId, accessToken);
 
             // Step 2: publish the container
             HttpPost publishRequest = new HttpPost(
@@ -137,9 +144,32 @@ public class InstagramService implements SocialMediaService {
             }
 
             String postId = publishNode.path("id").asText();
+            if (postId.isBlank()) {
+                // IG occasionally returns 200 with no id when ingestion silently
+                // dropped the post. Treat that as a failure so the scheduler
+                // marks the post FAILED and the user finds out instead of
+                // seeing a "Published" badge for a post that never landed.
+                throw new CustomExceptions.ExternalApiException(
+                    "Instagram publish returned no post id — response: " + publishJson);
+            }
             log.info("Published to Instagram account {} — post id {}", account.getHandle(), postId);
             return postId;
         }
+    }
+
+    private String resolvePublicMediaUrl(com.buildme.model.MediaAsset asset) {
+        if (r2StorageService.isEnabled() && asset.getS3Key() != null && !asset.getS3Key().isBlank()) {
+            if (r2StorageService.hasPublicUrl()) {
+                return r2StorageService.resolvePublicUrl(asset.getS3Key());
+            }
+            // 24h expiry — IG's ingestion can take a while and may retry; the
+            // signed URL must outlive any plausible processing window.
+            return r2StorageService.generatePresignedGetUrl(asset.getS3Key(), 86_400);
+        }
+        // Local-disk or non-R2 storage — fall back to whatever URL was stored.
+        // (Instagram cannot fetch http://localhost URLs; in that case the user
+        // needs to deploy with R2 configured.)
+        return asset.getUrl();
     }
 
     private void waitForContainerReady(CloseableHttpClient http, String containerId, String accessToken) throws Exception {

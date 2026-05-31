@@ -29,6 +29,7 @@ public class PostService {
     private final SocialAccountRepository socialAccountRepository;
     private final WorkspaceService workspaceService;
     private final UserService userService;
+    private final MediaService mediaService;
 
     @Transactional
     public PostResponse create(Long workspaceId, Long userId, CreatePostRequest request) {
@@ -161,13 +162,11 @@ public class PostService {
     }
 
     public PostResponse toResponse(Post p) {
+        // Delegate to MediaService so R2 presigning is applied uniformly across
+        // all post media responses (otherwise raw private-endpoint URLs leak to
+        // the frontend and <img> tags show broken icons).
         List<MediaAssetResponse> mediaResponses = p.getMediaAssets().stream()
-            .map(ma -> new MediaAssetResponse(
-                ma.getId(), ma.getFileName(), ma.getOriginalName(), ma.getContentType(),
-                ma.getFileSize(), ma.getUrl(), ma.getThumbnailUrl(), ma.getWidth(),
-                ma.getHeight(), ma.getDurationSeconds(), ma.getSource(),
-                ma.getExternalId(), ma.getCreatedAt()
-            )).toList();
+            .map(mediaService::toResponse).toList();
 
         return new PostResponse(
             p.getId(), p.getWorkspace().getId(),
