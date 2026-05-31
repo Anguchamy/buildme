@@ -27,6 +27,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserService userService;
 
     @Override
+    protected boolean shouldNotFilterAsyncDispatch() {
+        // OncePerRequestFilter skips async re-dispatches by default. But
+        // Spring Security's AuthorizationFilter does NOT skip them — it
+        // re-checks auth on the async dispatch. With STATELESS session
+        // policy the SecurityContext is empty by then, so the
+        // AuthorizationFilter sees no Authentication and throws
+        // AccessDenied (we saw this on SSE /notifications/stream and on
+        // any controller method that triggers an async dispatch). Run the
+        // JWT filter on async dispatches too so the SecurityContext is
+        // re-populated before Spring Security re-checks.
+        return false;
+    }
+
+    @Override
     protected void doFilterInternal(
         @NonNull HttpServletRequest request,
         @NonNull HttpServletResponse response,
