@@ -115,8 +115,21 @@ public class R2StorageService {
 
     public boolean isEnabled() { return enabled; }
 
-    /** True if a public base URL is configured (objects are publicly accessible). */
-    public boolean hasPublicUrl() { return !publicUrl.isBlank(); }
+    /**
+     * True if a *real* public base URL is configured — i.e. one that serves
+     * objects without AWS4 signing. We explicitly reject the private R2 host
+     * (*.r2.cloudflarestorage.com) here because users sometimes misconfigure
+     * R2_PUBLIC_URL by pointing it at the private host; that returns 400
+     * "InvalidArgument: Authorization" because no signature is attached, and
+     * downstream consumers (notably Instagram's server-side fetcher) reject
+     * the object even though the bytes would be fine over a signed URL.
+     */
+    public boolean hasPublicUrl() {
+        if (publicUrl.isBlank()) return false;
+        String lower = publicUrl.toLowerCase();
+        if (lower.contains(".r2.cloudflarestorage.com")) return false;
+        return true;
+    }
 
     /**
      * Generate a presigned GET URL so browsers can fetch private R2 objects.
