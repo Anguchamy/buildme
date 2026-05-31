@@ -140,29 +140,38 @@ public class MediaService {
         MediaAsset asset = mediaAssetRepository.findById(assetId)
             .orElseThrow(() -> new CustomExceptions.ResourceNotFoundException("MediaAsset", assetId));
 
-        // R2 assets — redirect to public URL or presigned GET URL
-        if (r2StorageService.isEnabled() && asset.getS3Key() != null) {
-            String redirectUrl = r2StorageService.hasPublicUrl()
-                ? r2StorageService.resolvePublicUrl(asset.getS3Key())
-                : r2StorageService.generatePresignedGetUrl(asset.getS3Key(), 3600);
-            HttpHeaders headers = new HttpHeaders();
-            headers.set(HttpHeaders.LOCATION, redirectUrl);
-            headers.set(HttpHeaders.CACHE_CONTROL, "max-age=3600");
-            return ResponseEntity.status(302).headers(headers).build();
-        }
-
         byte[] data;
-        try {
-            Path filePath = Paths.get(localUploadDir).resolve(asset.getS3Key());
-            data = java.nio.file.Files.readAllBytes(filePath);
-        } catch (IOException e) {
-            throw new CustomExceptions.ExternalApiException("Failed to read local file", e);
+        if (r2StorageService.isEnabled() && asset.getS3Key() != null && !asset.getS3Key().isBlank()) {
+            // Fetch bytes from R2 server-side and stream back as a plain 200.
+            // Previously this returned a 302 to a presigned URL, but the
+            // browser/axios follows the redirect with the Authorization header
+            // still attached, which R2 rejects — the resulting blob is empty
+            // and the <img> shows a broken icon. Proxying through the backend
+            // bypasses that problem entirely.
+            try {
+                data = r2StorageService.getObject(asset.getS3Key());
+            } catch (Exception e) {
+                log.warn("Failed to fetch R2 object {} for asset {}: {}",
+                    asset.getS3Key(), assetId, e.getMessage());
+                throw new CustomExceptions.ExternalApiException(
+                    "Failed to read media from storage: " + e.getMessage(), e);
+            }
+        } else {
+            try {
+                Path filePath = Paths.get(localUploadDir).resolve(asset.getS3Key());
+                data = java.nio.file.Files.readAllBytes(filePath);
+            } catch (IOException e) {
+                throw new CustomExceptions.ExternalApiException("Failed to read local file", e);
+            }
         }
 
         HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.parseMediaType(asset.getContentType()));
+        String ct = asset.getContentType();
+        headers.setContentType(ct != null && !ct.isBlank()
+            ? MediaType.parseMediaType(ct)
+            : MediaType.APPLICATION_OCTET_STREAM);
         headers.setContentLength(data.length);
-        headers.set(HttpHeaders.CACHE_CONTROL, "max-age=3600");
+        headers.set(HttpHeaders.CACHE_CONTROL, "private, max-age=3600");
         return ResponseEntity.ok().headers(headers).body(data);
     }
 

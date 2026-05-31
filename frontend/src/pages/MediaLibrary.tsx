@@ -175,7 +175,7 @@ export default function MediaLibrary() {
                 >
                   {asset.contentType?.startsWith('image/') ? (
                     <AuthenticatedImage
-                      src={asset.url ?? mediaApi.getFileUrl(workspaceId, asset.id)}
+                      src={mediaApi.getFileUrl(workspaceId, asset.id)}
                       alt={asset.originalName ?? ''}
                       className="w-full h-full object-cover"
                     />
@@ -217,7 +217,7 @@ export default function MediaLibrary() {
                   <div className="w-12 h-12 rounded-xl overflow-hidden bg-light-2 dark:bg-surface-3 flex-shrink-0">
                     {asset.contentType?.startsWith('image/') ? (
                       <AuthenticatedImage
-                        src={asset.url ?? mediaApi.getFileUrl(workspaceId, asset.id)}
+                        src={mediaApi.getFileUrl(workspaceId, asset.id)}
                         alt={asset.originalName ?? ''}
                         className="w-full h-full object-cover"
                       />
@@ -283,7 +283,7 @@ export default function MediaLibrary() {
             </button>
             {preview.contentType?.startsWith('image/') ? (
               <AuthenticatedImage
-                src={preview.url ?? mediaApi.getFileUrl(workspaceId, preview.id)}
+                src={mediaApi.getFileUrl(workspaceId, preview.id)}
                 alt={preview.originalName ?? ''}
                 className="max-h-[85vh] max-w-full rounded-2xl object-contain shadow-2xl"
               />

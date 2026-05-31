@@ -38,7 +38,7 @@ export default function MediaGrid({ assets, onSelect, onDelete, selectedIds = []
           >
             {isImage && (
               <AuthenticatedImage
-                src={asset.url ?? mediaApi.getFileUrl(workspaceId, asset.id)}
+                src={mediaApi.getFileUrl(workspaceId, asset.id)}
                 alt={asset.originalName}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
               />
