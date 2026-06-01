@@ -150,7 +150,7 @@ public class FacebookService implements SocialMediaService {
         return "https://www.facebook.com/v19.0/dialog/oauth"
             + "?client_id=" + appId
             + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
-            + "&scope=pages_show_list,pages_read_engagement,business_management"
+            + "&scope=pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_engagement,business_management"
             + "&response_type=code"
             + "&state=" + URLEncoder.encode(stateKey, StandardCharsets.UTF_8);
     }
@@ -233,7 +233,7 @@ public class FacebookService implements SocialMediaService {
             account.setAccessToken(pageToken);
             account.setConnected(true);
             account.setTokenExpiresAt(OffsetDateTime.now().plusDays(60));
-            account.setScopes("pages_show_list,pages_read_engagement,business_management");
+            account.setScopes("pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_engagement,business_management");
 
             socialAccountRepository.save(account);
             log.info("Facebook account '{}' connected for workspace {}", handle, workspaceId);
