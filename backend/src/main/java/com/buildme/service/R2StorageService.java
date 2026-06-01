@@ -160,18 +160,21 @@ public class R2StorageService {
             String scope      = date + "/auto/s3/aws4_request";
             String credential = accessKey + "/" + scope;
 
-            // Build canonical query string with params in alphabetical order.
-            // response-content-type comes before the X-Amz-* group.
+            // SigV4 requires the canonical query string sorted by URI-encoded
+            // key. In ASCII uppercase precedes lowercase, so all X-Amz-* params
+            // sort BEFORE response-content-type. Previously we emitted
+            // response-content-type first, which produced a signature R2
+            // rejected with SignatureDoesNotMatch.
             StringBuilder qs = new StringBuilder();
-            if (responseContentType != null && !responseContentType.isBlank()) {
-                qs.append("response-content-type=").append(urlEncode(responseContentType)).append('&');
-            }
             qs.append("X-Amz-Algorithm=AWS4-HMAC-SHA256")
               .append("&X-Amz-Content-Sha256=UNSIGNED-PAYLOAD")
               .append("&X-Amz-Credential=").append(urlEncode(credential))
               .append("&X-Amz-Date=").append(datetime)
               .append("&X-Amz-Expires=").append(expiresSeconds)
               .append("&X-Amz-SignedHeaders=host");
+            if (responseContentType != null && !responseContentType.isBlank()) {
+                qs.append("&response-content-type=").append(urlEncode(responseContentType));
+            }
             String queryString = qs.toString();
 
             String canonicalHeaders = "host:" + host + "\n";
