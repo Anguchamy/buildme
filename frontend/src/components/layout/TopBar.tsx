@@ -66,7 +66,19 @@ export default function TopBar() {
   }, [])
 
   return (
-    <header className="h-14 bg-white dark:bg-surface-1 border-b border-light-3 dark:border-white/5 flex items-center justify-between px-5 shrink-0 gap-4">
+    <header
+      className="h-14 flex items-center justify-between px-5 shrink-0 gap-4"
+      style={{
+        background: 'white',
+        borderBottom: '1px solid rgba(13,148,136,0.1)',
+      }}
+    >
+      <style>{`
+        html.dark header {
+          background: rgba(10,18,32,0.98) !important;
+          border-bottom-color: rgba(13,148,136,0.1) !important;
+        }
+      `}</style>
       {/* Search */}
       <div className="relative flex-1 max-w-sm">
         <svg className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -77,7 +89,7 @@ export default function TopBar() {
           onChange={(e) => setSearch(e.target.value)}
           type="text"
           placeholder="Search posts, media..."
-          className="w-full bg-light-1 dark:bg-surface-2 border border-light-3 dark:border-white/8 rounded-xl pl-9 pr-3 py-1.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-500 transition-all"
+          className="w-full rounded-xl pl-9 pr-3 py-1.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none transition-all input"
         />
         {search && (
           <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-white">
@@ -99,7 +111,10 @@ export default function TopBar() {
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-light-2 dark:text-gray-400 dark:hover:text-white dark:hover:bg-surface-3 transition-colors"
+          className="p-2 rounded-lg text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+        style={{ background: 'transparent' }}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(13,148,136,0.08)' }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
         >
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </button>
@@ -108,7 +123,10 @@ export default function TopBar() {
         <div className="relative" ref={notifsRef}>
           <button
             onClick={() => { setShowNotifs(!showNotifs); setShowUser(false) }}
-            className="relative p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-light-2 dark:text-gray-400 dark:hover:text-white dark:hover:bg-surface-3 transition-colors"
+            className="relative p-2 rounded-lg text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
+            style={{ background: 'transparent' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(13,148,136,0.08)' }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
