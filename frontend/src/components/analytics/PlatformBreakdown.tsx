@@ -1,55 +1,56 @@
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts'
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, CartesianGrid } from 'recharts'
 import { Analytics, Platform } from '@/types'
 import { getPlatformColor } from '@/utils/helpers'
-import { useThemeStore } from '@/store/themeStore'
 
-interface Props {
-  data: Analytics[]
-}
+interface Props { data: Analytics[] }
 
 export default function PlatformBreakdown({ data }: Props) {
-  const { theme } = useThemeStore()
-  const isDark = theme === 'dark'
-
   const aggregated = Object.values(Platform).map((platform) => {
-    const platformData = data.filter((a) => a.platform === platform)
-    const total = platformData.reduce((sum, a) => sum + a.likes + a.comments + a.shares, 0)
+    const pd = data.filter((a) => a.platform === platform)
+    const total = pd.reduce((s, a) => s + a.likes + a.comments + a.shares, 0)
     return { platform, total }
   }).filter((d) => d.total > 0)
 
-  const tickColor = isDark ? '#6b7280' : '#9ca3af'
-  const tooltipBg = isDark ? '#1c1c30' : '#ffffff'
-  const tooltipBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
-
   return (
-    <div className="card">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Platform Breakdown</h3>
-        <span className="text-xs text-gray-400">Total interactions</span>
+    <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
+      <div style={{ position: 'absolute', top: 0, right: 0, width: '40%', height: '50%', background: 'radial-gradient(ellipse, rgba(6,182,212,0.08) 0%, transparent 70%)', pointerEvents: 'none', filter: 'blur(20px)' }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div>
+          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', marginBottom: 2 }}>Platform Breakdown</h3>
+          <p style={{ fontSize: 11, color: 'rgba(148,163,184,0.6)' }}>Total interactions by platform</p>
+        </div>
       </div>
+
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={aggregated} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
           <XAxis
             dataKey="platform"
-            tick={{ fill: tickColor, fontSize: 10 }}
-            axisLine={false}
-            tickLine={false}
+            tick={{ fill: 'rgba(148,163,184,0.5)', fontSize: 10 }}
+            axisLine={false} tickLine={false}
             tickFormatter={(v) => v.charAt(0) + v.slice(1).toLowerCase().slice(0, 4)}
           />
-          <YAxis tick={{ fill: tickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: 'rgba(148,163,184,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{
-              backgroundColor: tooltipBg,
-              border: `1px solid ${tooltipBorder}`,
+              background: 'rgba(12,18,33,0.95)',
+              border: '1px solid rgba(168,85,247,0.2)',
               borderRadius: 12,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.6)',
               fontSize: 12,
+              backdropFilter: 'blur(12px)',
             }}
-            labelStyle={{ color: isDark ? '#e5e7eb' : '#111827', fontWeight: 600, marginBottom: 4 }}
+            labelStyle={{ color: '#e2e8f0', fontWeight: 700 }}
+            cursor={{ fill: 'rgba(168,85,247,0.05)' }}
           />
           <Bar dataKey="total" radius={[6, 6, 0, 0]}>
             {aggregated.map((entry) => (
-              <Cell key={entry.platform} fill={getPlatformColor(entry.platform)} />
+              <Cell
+                key={entry.platform}
+                fill={getPlatformColor(entry.platform)}
+                style={{ filter: `drop-shadow(0 0 6px ${getPlatformColor(entry.platform)}80)` }}
+              />
             ))}
           </Bar>
         </BarChart>

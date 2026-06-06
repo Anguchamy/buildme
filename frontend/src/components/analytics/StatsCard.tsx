@@ -1,3 +1,5 @@
+import { useRef } from 'react'
+
 interface Props {
   label: string
   value: string | number
@@ -6,88 +8,137 @@ interface Props {
   accent?: 'brand' | 'green' | 'blue' | 'orange'
 }
 
-const accentStyles: Record<string, { icon: string; glow: string; bar: string }> = {
-  brand:  { icon: 'rgba(13,148,136,0.12)',  glow: 'rgba(13,148,136,0.2)',  bar: 'linear-gradient(to bottom, #0d9488, #06b6d4)' },
-  green:  { icon: 'rgba(34,197,94,0.12)',   glow: 'rgba(34,197,94,0.18)',  bar: 'linear-gradient(to bottom, #22c55e, #4ade80)' },
-  blue:   { icon: 'rgba(6,182,212,0.12)',   glow: 'rgba(6,182,212,0.18)',  bar: 'linear-gradient(to bottom, #06b6d4, #22d3ee)' },
-  orange: { icon: 'rgba(245,158,11,0.12)',  glow: 'rgba(245,158,11,0.18)', bar: 'linear-gradient(to bottom, #f59e0b, #fbbf24)' },
-}
-
-const iconColor: Record<string, string> = {
-  brand:  '#0d9488',
-  green:  '#22c55e',
-  blue:   '#06b6d4',
-  orange: '#f59e0b',
+const accentConfig = {
+  brand:  { from: '#9333ea', to: '#a855f7', glow: 'rgba(168,85,247,0.35)',  ring: 'rgba(168,85,247,0.2)',  badge: 'rgba(168,85,247,0.12)', light: '#c084fc' },
+  green:  { from: '#059669', to: '#34d399', glow: 'rgba(52,211,153,0.35)',  ring: 'rgba(52,211,153,0.2)',  badge: 'rgba(52,211,153,0.12)', light: '#6ee7b7' },
+  blue:   { from: '#0891b2', to: '#22d3ee', glow: 'rgba(34,211,238,0.35)',  ring: 'rgba(34,211,238,0.2)',  badge: 'rgba(34,211,238,0.12)', light: '#67e8f9' },
+  orange: { from: '#d97706', to: '#fbbf24', glow: 'rgba(251,191,36,0.35)',  ring: 'rgba(251,191,36,0.2)',  badge: 'rgba(251,191,36,0.12)', light: '#fde68a' },
 }
 
 export default function StatsCard({ label, value, change, icon, accent = 'brand' }: Props) {
-  const style = accentStyles[accent]
-  const color = iconColor[accent]
+  const cfg = accentConfig[accent]
+  const cardRef = useRef<HTMLDivElement>(null)
+
+  /* ── 3D tilt on mouse move ── */
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = cardRef.current
+    if (!el) return
+    const rect = el.getBoundingClientRect()
+    const x = (e.clientX - rect.left) / rect.width  - 0.5   // -0.5 → 0.5
+    const y = (e.clientY - rect.top)  / rect.height - 0.5
+    el.style.transform = `perspective(600px) rotateY(${x * 12}deg) rotateX(${-y * 12}deg) translateZ(8px)`
+    el.style.boxShadow = `
+      ${x * -20}px ${y * -20}px 60px ${cfg.glow},
+      0 28px 80px rgba(0,0,0,0.6),
+      0 0 0 1px ${cfg.ring},
+      inset 0 1px 0 rgba(255,255,255,0.07)
+    `
+  }
+  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = cardRef.current
+    if (!el) return
+    el.style.transform = ''
+    el.style.boxShadow = `
+      0 1px 0 rgba(255,255,255,0.05) inset,
+      0 16px 48px rgba(0,0,0,0.5),
+      0 0 0 1px rgba(255,255,255,0.04)
+    `
+  }
+
+  const isDark = document.documentElement.classList.contains('dark')
 
   return (
     <div
-      className="relative overflow-hidden rounded-2xl p-5 transition-all duration-250 cursor-default group"
+      ref={cardRef}
+      onMouseMove={handleMouseMove}
+      onMouseLeave={handleMouseLeave}
       style={{
-        background: 'white',
-        border: `1px solid rgba(13,148,136,0.1)`,
-        boxShadow: '0 2px 12px rgba(0,0,0,0.05)',
-      }}
-      onMouseEnter={(e) => {
-        const el = e.currentTarget
-        el.style.boxShadow = `0 8px 28px ${style.glow}, 0 0 0 1px ${color}33`
-        el.style.transform = 'translateY(-2px)'
-        el.style.borderColor = `${color}30`
-      }}
-      onMouseLeave={(e) => {
-        const el = e.currentTarget
-        el.style.boxShadow = '0 2px 12px rgba(0,0,0,0.05)'
-        el.style.transform = ''
-        el.style.borderColor = 'rgba(13,148,136,0.1)'
+        borderRadius: '1rem',
+        padding: '1.25rem',
+        position: 'relative',
+        overflow: 'hidden',
+        cursor: 'default',
+        transition: 'transform 0.12s ease, box-shadow 0.12s ease',
+        background: 'linear-gradient(145deg, #111827 0%, #070b14 100%)',
+        border: '1px solid rgba(255,255,255,0.06)',
+        boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset, 0 16px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)',
+        transformStyle: 'preserve-3d',
       }}
     >
+      {/* Light mode override */}
       <style>{`
-        html.dark .stats-card-inner {
-          background: linear-gradient(145deg, rgba(15,27,45,0.98), rgba(10,18,32,0.98));
+        html:not(.dark) .sc-wrap-${accent} {
+          background: #ffffff !important;
+          border-color: rgba(0,0,0,0.07) !important;
+          box-shadow: 0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(0,0,0,0.07) !important;
         }
       `}</style>
+      <div className={`sc-wrap-${accent}`} style={{ position: 'absolute', inset: 0, borderRadius: 'inherit' }} />
 
-      {/* Dark mode override via absolute overlay */}
-      <div
-        className="stats-card-inner absolute inset-0 rounded-2xl opacity-0 dark:opacity-100 pointer-events-none"
-        style={{ background: 'linear-gradient(145deg, rgba(15,27,45,0.98), rgba(10,18,32,0.98))' }}
-      />
+      {/* Ambient glow blob */}
+      <div style={{
+        position: 'absolute', top: '-20%', right: '-10%',
+        width: '60%', height: '60%',
+        background: `radial-gradient(ellipse, ${cfg.glow.replace('0.35','0.15')} 0%, transparent 70%)`,
+        pointerEvents: 'none',
+        filter: 'blur(20px)',
+      }} />
 
-      {/* Left accent bar */}
-      <div
-        className="absolute left-0 top-4 bottom-4 w-[3px] rounded-r-full"
-        style={{ background: style.bar }}
-      />
+      {/* Top-left corner accent line */}
+      <div style={{
+        position: 'absolute', left: 0, top: 0, bottom: 0, width: 3,
+        background: `linear-gradient(to bottom, ${cfg.from}, ${cfg.to})`,
+        borderRadius: '0 2px 2px 0',
+        boxShadow: `0 0 12px ${cfg.glow}`,
+      }} />
 
-      <div className="relative pl-2">
-        {/* Icon + change badge row */}
-        <div className="flex items-start justify-between mb-3">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center text-lg"
-            style={{ background: style.icon }}
-          >
+      {/* Content */}
+      <div style={{ position: 'relative', paddingLeft: '0.5rem' }}>
+        {/* Row: icon + badge */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '0.75rem',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '1.25rem',
+            background: cfg.badge,
+            border: `1px solid ${cfg.ring}`,
+            boxShadow: `0 4px 12px ${cfg.glow.replace('0.35','0.2')}`,
+          }}>
             {icon}
           </div>
+
           {change !== undefined && (
-            <span
-              className="text-xs font-semibold px-1.5 py-0.5 rounded-lg"
-              style={{
-                color: change >= 0 ? '#22c55e' : '#ef4444',
-                background: change >= 0 ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
-              }}
-            >
+            <span style={{
+              fontSize: '0.7rem',
+              fontWeight: 700,
+              padding: '0.2rem 0.5rem',
+              borderRadius: '0.5rem',
+              color: change >= 0 ? '#34d399' : '#f87171',
+              background: change >= 0 ? 'rgba(52,211,153,0.12)' : 'rgba(248,113,113,0.12)',
+              border: `1px solid ${change >= 0 ? 'rgba(52,211,153,0.25)' : 'rgba(248,113,113,0.25)'}`,
+            }}>
               {change >= 0 ? '▲' : '▼'} {Math.abs(change)}%
             </span>
           )}
         </div>
 
         {/* Value */}
-        <p className="text-2xl font-bold text-gray-900 dark:text-white tabular-nums tracking-tight">{value}</p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5 font-medium">{label}</p>
+        <p style={{
+          fontSize: '1.75rem',
+          fontWeight: 800,
+          letterSpacing: '-0.03em',
+          lineHeight: 1,
+          marginBottom: '0.25rem',
+          background: `linear-gradient(135deg, #fff 0%, ${cfg.light} 100%)`,
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          backgroundClip: 'text',
+        }}>
+          {value}
+        </p>
+        <p style={{ fontSize: '0.72rem', fontWeight: 500, color: 'rgba(148,163,184,0.8)', letterSpacing: '0.02em' }}>
+          {label}
+        </p>
       </div>
     </div>
   )

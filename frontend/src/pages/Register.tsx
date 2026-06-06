@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -12,122 +13,190 @@ const schema = z.object({
   password: z.string().min(8, 'Password must be at least 8 characters'),
 })
 
+function Orb({ style }: { style: React.CSSProperties }) {
+  return <div style={{ position: 'absolute', borderRadius: '50%', filter: 'blur(80px)', pointerEvents: 'none', ...style }} />
+}
+
 export default function Register() {
   const register_ = useRegisterMutation()
+  const [showPass, setShowPass] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
+
   const { register, handleSubmit, getValues, formState: { errors } } = useForm<RegisterRequest>({
     resolver: zodResolver(schema),
   })
 
+  /* 3D tilt */
+  const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const el = cardRef.current; if (!el) return
+    const r = el.getBoundingClientRect()
+    const x = (e.clientX - r.left) / r.width  - 0.5
+    const y = (e.clientY - r.top)  / r.height - 0.5
+    el.style.transform = `perspective(800px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateZ(4px)`
+  }
+  const onMouseLeave = () => { if (cardRef.current) cardRef.current.style.transform = '' }
+
   return (
-    <div className="min-h-screen bg-light-1 dark:bg-surface-0 flex relative overflow-hidden">
-      {/* Background glows */}
-      <div className="absolute top-0 right-1/4 w-[600px] h-[400px] bg-brand-500/8 dark:bg-brand-500/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-[400px] h-[300px] bg-accent-500/6 dark:bg-accent-500/8 rounded-full blur-3xl pointer-events-none" />
+    <div style={{
+      minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: '#03040a', position: 'relative', overflow: 'hidden', padding: 24,
+    }}>
+      {/* Ambient orbs */}
+      <Orb style={{ width: 600, height: 600, top: '-20%', right: '10%', background: 'radial-gradient(circle, rgba(147,51,234,0.18) 0%, transparent 70%)' }} />
+      <Orb style={{ width: 500, height: 500, bottom: '-15%', left: '-5%', background: 'radial-gradient(circle, rgba(6,182,212,0.14) 0%, transparent 70%)' }} />
+      <Orb style={{ width: 300, height: 300, top: '30%', right: '-8%', background: 'radial-gradient(circle, rgba(244,114,182,0.1) 0%, transparent 70%)' }} />
 
-      <div className="flex-1 flex items-center justify-center p-6 relative z-10">
-        <div className="w-full max-w-sm">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <Link to="/" className="inline-flex items-center gap-2.5 mb-6">
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-brand-500 to-accent-500 flex items-center justify-center shadow-brand">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
-                </svg>
-              </div>
-              <span className="text-xl font-bold text-gray-900 dark:text-white">build.me</span>
-            </Link>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Create your account</h1>
-            <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">Start your free plan — no card needed</p>
-          </div>
+      {/* Dot grid */}
+      <div style={{
+        position: 'absolute', inset: 0, pointerEvents: 'none',
+        backgroundImage: 'radial-gradient(rgba(168,85,247,0.08) 1px, transparent 1px)',
+        backgroundSize: '28px 28px',
+      }} />
 
-          {/* Benefits banner */}
-          <div className="flex justify-center gap-4 mb-6 text-xs text-gray-500 dark:text-gray-400">
-            {['7 platforms', 'AI captions', 'Free forever'].map((b) => (
-              <span key={b} className="flex items-center gap-1">
-                <svg className="text-brand-500" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                {b}
-              </span>
-            ))}
-          </div>
+      <div style={{ width: '100%', maxWidth: 400, position: 'relative', zIndex: 10 }}>
 
-          {register_.isSuccess && (
-            <div className="bg-green-500/10 border border-green-500/20 rounded-xl p-4 mb-4 text-center space-y-1">
-              <p className="text-green-600 dark:text-green-400 font-semibold text-sm">Account created!</p>
-              <p className="text-gray-500 dark:text-gray-400 text-xs">
-                We sent a verification link to <strong>{getValues('email')}</strong>.<br />
-                Please check your inbox and verify your email before logging in.
-              </p>
+        {/* Logo */}
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 20, textDecoration: 'none' }}>
+            <div style={{
+              width: 44, height: 44, borderRadius: 14,
+              background: 'linear-gradient(135deg, #9333ea, #a855f7 50%, #06b6d4)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 30px rgba(147,51,234,0.5), 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
+              </svg>
             </div>
-          )}
+            <span style={{
+              fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em',
+              background: 'linear-gradient(135deg, #c084fc, #22d3ee)',
+              WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            }}>build.me</span>
+          </Link>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.03em', marginBottom: 6 }}>Create your account</h1>
+          <p style={{ fontSize: 14, color: 'rgba(148,163,184,0.7)' }}>Free forever · No card needed</p>
+        </div>
 
-          <div className="card shadow-card dark:shadow-card-dark">
-            <form onSubmit={handleSubmit((data) => register_.mutate(data))} className="space-y-4">
-              <div>
-                <label className="label">Full Name</label>
-                <input
-                  {...register('fullName')}
-                  type="text"
-                  placeholder="John Doe"
-                  className="input"
-                  autoComplete="name"
-                />
-                {errors.fullName && <p className="text-red-400 text-xs mt-1.5">{errors.fullName.message}</p>}
-              </div>
+        {/* Benefit chips */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginBottom: 20, flexWrap: 'wrap' }}>
+          {['7 platforms', 'AI captions', 'Free forever'].map(b => (
+            <span key={b} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 5,
+              fontSize: 11, fontWeight: 700, color: '#34d399',
+              background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.18)',
+              padding: '4px 10px', borderRadius: 99,
+            }}>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+              {b}
+            </span>
+          ))}
+        </div>
 
-              <div>
-                <label className="label">Email address</label>
-                <input
-                  {...register('email')}
-                  type="email"
-                  placeholder="you@example.com"
-                  className="input"
-                  autoComplete="email"
-                />
-                {errors.email && <p className="text-red-400 text-xs mt-1.5">{errors.email.message}</p>}
-              </div>
+        {/* Success state */}
+        {register_.isSuccess && (
+          <div style={{
+            background: 'rgba(52,211,153,0.08)', border: '1px solid rgba(52,211,153,0.2)',
+            borderRadius: 14, padding: '14px 18px', marginBottom: 16, textAlign: 'center',
+          }}>
+            <p style={{ fontSize: 14, fontWeight: 700, color: '#34d399', marginBottom: 4 }}>🎉 Account created!</p>
+            <p style={{ fontSize: 12, color: 'rgba(148,163,184,0.7)', lineHeight: 1.6 }}>
+              We sent a verification link to <strong style={{ color: '#e2e8f0' }}>{getValues('email')}</strong>.<br />
+              Please check your inbox before signing in.
+            </p>
+          </div>
+        )}
 
-              <div>
-                <label className="label">Password</label>
+        {/* 3D Card */}
+        <div
+          ref={cardRef}
+          onMouseMove={onMouseMove}
+          onMouseLeave={onMouseLeave}
+          style={{
+            borderRadius: 20, padding: 28, position: 'relative', overflow: 'hidden',
+            background: 'linear-gradient(145deg, #111827 0%, #070b14 100%)',
+            border: '1px solid rgba(168,85,247,0.15)',
+            boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset, 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03)',
+            transition: 'transform 0.12s ease',
+            transformStyle: 'preserve-3d',
+          }}
+        >
+          {/* Top sheen */}
+          <div style={{ position: 'absolute', inset: '0 0 auto', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)', pointerEvents: 'none' }} />
+          {/* Corner glow */}
+          <div style={{ position: 'absolute', top: -40, left: -40, width: 120, height: 120, background: 'radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+
+          <form onSubmit={handleSubmit((data) => register_.mutate(data))} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
+
+            <div>
+              <label className="label">Full Name</label>
+              <input {...register('fullName')} type="text" placeholder="John Doe" className="input" autoComplete="name" />
+              {errors.fullName && <p style={{ color: '#f87171', fontSize: 12, marginTop: 6 }}>{errors.fullName.message}</p>}
+            </div>
+
+            <div>
+              <label className="label">Email address</label>
+              <input {...register('email')} type="email" placeholder="you@example.com" className="input" autoComplete="email" />
+              {errors.email && <p style={{ color: '#f87171', fontSize: 12, marginTop: 6 }}>{errors.email.message}</p>}
+            </div>
+
+            <div>
+              <label className="label">Password</label>
+              <div style={{ position: 'relative' }}>
                 <input
                   {...register('password')}
-                  type="password"
+                  type={showPass ? 'text' : 'password'}
                   placeholder="Min. 8 characters"
                   className="input"
+                  style={{ paddingRight: 40 }}
                   autoComplete="new-password"
                 />
-                {errors.password && <p className="text-red-400 text-xs mt-1.5">{errors.password.message}</p>}
+                <button
+                  type="button"
+                  onClick={() => setShowPass(!showPass)}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.5)', padding: 0 }}
+                >
+                  {showPass
+                    ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+                    : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                  }
+                </button>
               </div>
+              {errors.password && <p style={{ color: '#f87171', fontSize: 12, marginTop: 6 }}>{errors.password.message}</p>}
+            </div>
 
-              {register_.error && (
-                <div className="flex items-center gap-2.5 bg-red-500/10 border border-red-500/20 rounded-xl p-3">
-                  <svg className="text-red-400 flex-shrink-0" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
-                  </svg>
-                  <p className="text-red-400 text-sm">Registration failed. Email may already be in use.</p>
-                </div>
-              )}
+            {register_.error && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: 10, background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: 12, padding: '10px 14px' }}>
+                <svg style={{ color: '#f87171', flexShrink: 0 }} width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
+                </svg>
+                <p style={{ color: '#f87171', fontSize: 13 }}>Registration failed. Email may already be in use.</p>
+              </div>
+            )}
 
-              <Button type="submit" variant="gradient" loading={register_.isPending} className="w-full justify-center mt-1">
-                Create free account
-              </Button>
-            </form>
-          </div>
-
-          <p className="text-center text-xs text-gray-400 mt-4">
-            By signing up, you agree to our{' '}
-            <span className="text-brand-500 cursor-pointer hover:text-brand-600">Terms</span> &amp;{' '}
-            <span className="text-brand-500 cursor-pointer hover:text-brand-600">Privacy Policy</span>
-          </p>
-
-          <p className="text-center text-sm text-gray-400 mt-4">
-            Already have an account?{' '}
-            <Link to="/login" className="text-brand-500 hover:text-brand-600 font-semibold transition-colors">
-              Sign in
-            </Link>
-          </p>
+            <Button type="submit" variant="gradient" loading={register_.isPending} className="w-full" size="lg" glow>
+              Create free account
+            </Button>
+          </form>
         </div>
+
+        {/* Footer */}
+        <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(148,163,184,0.4)', marginTop: 12 }}>
+          By signing up you agree to our{' '}
+          <span style={{ color: '#a855f7', cursor: 'pointer' }}>Terms</span> &amp;{' '}
+          <span style={{ color: '#a855f7', cursor: 'pointer' }}>Privacy Policy</span>
+        </p>
+
+        <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(148,163,184,0.6)', marginTop: 16 }}>
+          Already have an account?{' '}
+          <Link to="/login" style={{
+            background: 'linear-gradient(135deg, #a855f7, #22d3ee)',
+            WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
+            fontWeight: 700, textDecoration: 'none',
+          }}>
+            Sign in
+          </Link>
+        </p>
       </div>
     </div>
   )

@@ -69,14 +69,17 @@ export default function TopBar() {
     <header
       className="h-14 flex items-center justify-between px-5 shrink-0 gap-4"
       style={{
-        background: 'white',
-        borderBottom: '1px solid rgba(13,148,136,0.1)',
+        background: 'rgba(7,11,20,0.95)',
+        backdropFilter: 'blur(20px)',
+        WebkitBackdropFilter: 'blur(20px)',
+        borderBottom: '1px solid rgba(168,85,247,0.1)',
+        position: 'relative',
       }}
     >
       <style>{`
-        html.dark header {
-          background: rgba(10,18,32,0.98) !important;
-          border-bottom-color: rgba(13,148,136,0.1) !important;
+        html:not(.dark) header.app-topbar {
+          background: rgba(255,255,255,0.92) !important;
+          border-bottom-color: rgba(147,51,234,0.1) !important;
         }
       `}</style>
       {/* Search */}
@@ -89,7 +92,7 @@ export default function TopBar() {
           onChange={(e) => setSearch(e.target.value)}
           type="text"
           placeholder="Search posts, media..."
-          className="w-full rounded-xl pl-9 pr-3 py-1.5 text-sm text-gray-900 dark:text-white placeholder:text-gray-400 focus:outline-none transition-all input"
+          className="input w-full pl-9 pr-3 py-1.5"
         />
         {search && (
           <button onClick={() => setSearch('')} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-white">
@@ -111,10 +114,10 @@ export default function TopBar() {
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="p-2 rounded-lg text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-        style={{ background: 'transparent' }}
-        onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(13,148,136,0.08)' }}
-        onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+          className="p-2 rounded-lg transition-all"
+        style={{ color: 'rgba(148,163,184,0.7)', background: 'transparent' }}
+        onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(168,85,247,0.1)'; b.style.color = '#c084fc' }}
+        onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'rgba(148,163,184,0.7)' }}
         >
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </button>
@@ -123,10 +126,10 @@ export default function TopBar() {
         <div className="relative" ref={notifsRef}>
           <button
             onClick={() => { setShowNotifs(!showNotifs); setShowUser(false) }}
-            className="relative p-2 rounded-lg text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
-            style={{ background: 'transparent' }}
-            onMouseEnter={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'rgba(13,148,136,0.08)' }}
-            onMouseLeave={(e) => { (e.currentTarget as HTMLButtonElement).style.background = 'transparent' }}
+            className="relative p-2 rounded-lg transition-all"
+            style={{ color: 'rgba(148,163,184,0.7)', background: 'transparent' }}
+            onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(168,85,247,0.1)'; b.style.color = '#c084fc' }}
+            onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'rgba(148,163,184,0.7)' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>

@@ -20,12 +20,15 @@ export default function DashboardLayout() {
   }, [])
 
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#f7fdfc' }}>
-      <style>{`html.dark .app-shell { background: #060b12 !important; } html.dark .app-main { background: #060b12 !important; }`}</style>
+    <div className="flex h-screen overflow-hidden" style={{ background: '#03040a' }}>
+      <style>{`
+        html:not(.dark) .app-shell { background: #f8f9ff !important; }
+        html:not(.dark) .app-main  { background: #f8f9ff !important; }
+      `}</style>
       <Sidebar />
-      <div className="app-shell flex flex-col flex-1 overflow-hidden min-w-0" style={{ background: '#f7fdfc' }}>
+      <div className="app-shell flex flex-col flex-1 overflow-hidden min-w-0" style={{ background: '#03040a' }}>
         <TopBar />
-        <main className="app-main flex-1 overflow-y-auto p-6" style={{ background: '#f7fdfc' }}>
+        <main className="app-main flex-1 overflow-y-auto p-6" style={{ background: '#03040a', position: 'relative' }}>
           <Outlet />
         </main>
       </div>

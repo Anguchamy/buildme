@@ -1,16 +1,10 @@
 import { AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 import { Analytics } from '@/types'
 import { format, parseISO } from 'date-fns'
-import { useThemeStore } from '@/store/themeStore'
 
-interface Props {
-  data: Analytics[]
-}
+interface Props { data: Analytics[] }
 
 export default function EngagementChart({ data }: Props) {
-  const { theme } = useThemeStore()
-  const isDark = theme === 'dark'
-
   const chartData = data.map((a) => ({
     date: format(parseISO(a.metricDate), 'MMM d'),
     likes: a.likes,
@@ -18,53 +12,66 @@ export default function EngagementChart({ data }: Props) {
     shares: a.shares,
   }))
 
-  const gridColor = isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.06)'
-  const tickColor = isDark ? '#6b7280' : '#9ca3af'
-  const tooltipBg = isDark ? '#1c1c30' : '#ffffff'
-  const tooltipBorder = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
-
   return (
-    <div className="card">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-white">Engagement Over Time</h3>
-        <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-brand-500 inline-block" /> Likes</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-success-500 inline-block" /> Comments</span>
-          <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-accent-500 inline-block" /> Shares</span>
+    <div className="card" style={{ position: 'relative', overflow: 'hidden' }}>
+      {/* Neon glow blob behind chart */}
+      <div style={{
+        position: 'absolute', bottom: 0, left: '20%', right: '20%', height: '40%',
+        background: 'radial-gradient(ellipse, rgba(168,85,247,0.1) 0%, transparent 70%)',
+        pointerEvents: 'none', filter: 'blur(20px)',
+      }} />
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+        <div>
+          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', marginBottom: 2 }}>Engagement Over Time</h3>
+          <p style={{ fontSize: 11, color: 'rgba(148,163,184,0.6)' }}>Likes, comments & shares per day</p>
+        </div>
+        <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'rgba(148,163,184,0.8)' }}>
+          {[
+            { color: '#a855f7', label: 'Likes' },
+            { color: '#34d399', label: 'Comments' },
+            { color: '#22d3ee', label: 'Shares' },
+          ].map(({ color, label }) => (
+            <span key={label} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+              <span style={{ width: 8, height: 8, borderRadius: '50%', background: color, display: 'inline-block', boxShadow: `0 0 6px ${color}` }} />
+              {label}
+            </span>
+          ))}
         </div>
       </div>
+
       <ResponsiveContainer width="100%" height={220}>
         <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <defs>
-            <linearGradient id="likesGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#8b5cf6" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="commentsGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#22c55e" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#22c55e" stopOpacity={0} />
-            </linearGradient>
-            <linearGradient id="sharesGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#0ea5e9" stopOpacity={0.3} />
-              <stop offset="100%" stopColor="#0ea5e9" stopOpacity={0} />
-            </linearGradient>
+            {[
+              { id: 'likesGrad',    color: '#a855f7' },
+              { id: 'commentsGrad', color: '#34d399' },
+              { id: 'sharesGrad',   color: '#22d3ee' },
+            ].map(({ id, color }) => (
+              <linearGradient key={id} id={id} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%"   stopColor={color} stopOpacity={0.35} />
+                <stop offset="100%" stopColor={color} stopOpacity={0.01} />
+              </linearGradient>
+            ))}
           </defs>
-          <CartesianGrid strokeDasharray="3 3" stroke={gridColor} vertical={false} />
-          <XAxis dataKey="date" tick={{ fill: tickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: tickColor, fontSize: 11 }} axisLine={false} tickLine={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+          <XAxis dataKey="date" tick={{ fill: 'rgba(148,163,184,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: 'rgba(148,163,184,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{
-              backgroundColor: tooltipBg,
-              border: `1px solid ${tooltipBorder}`,
+              background: 'rgba(12,18,33,0.95)',
+              border: '1px solid rgba(168,85,247,0.2)',
               borderRadius: 12,
-              boxShadow: '0 8px 32px rgba(0,0,0,0.2)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 20px rgba(168,85,247,0.1)',
               fontSize: 12,
+              backdropFilter: 'blur(12px)',
             }}
-            labelStyle={{ color: isDark ? '#e5e7eb' : '#111827', fontWeight: 600, marginBottom: 4 }}
+            labelStyle={{ color: '#e2e8f0', fontWeight: 700, marginBottom: 4 }}
+            itemStyle={{ color: 'rgba(148,163,184,0.9)' }}
           />
-          <Area type="monotone" dataKey="likes" stroke="#8b5cf6" strokeWidth={2} fill="url(#likesGrad)" dot={false} />
-          <Area type="monotone" dataKey="comments" stroke="#22c55e" strokeWidth={2} fill="url(#commentsGrad)" dot={false} />
-          <Area type="monotone" dataKey="shares" stroke="#0ea5e9" strokeWidth={2} fill="url(#sharesGrad)" dot={false} />
+          <Area type="monotone" dataKey="likes"    stroke="#a855f7" strokeWidth={2} fill="url(#likesGrad)"    dot={false} activeDot={{ r: 5, fill: '#a855f7', strokeWidth: 0, filter: 'drop-shadow(0 0 6px #a855f7)' }} />
+          <Area type="monotone" dataKey="comments" stroke="#34d399" strokeWidth={2} fill="url(#commentsGrad)" dot={false} activeDot={{ r: 5, fill: '#34d399', strokeWidth: 0, filter: 'drop-shadow(0 0 6px #34d399)' }} />
+          <Area type="monotone" dataKey="shares"   stroke="#22d3ee" strokeWidth={2} fill="url(#sharesGrad)"   dot={false} activeDot={{ r: 5, fill: '#22d3ee', strokeWidth: 0, filter: 'drop-shadow(0 0 6px #22d3ee)' }} />
         </AreaChart>
       </ResponsiveContainer>
     </div>
