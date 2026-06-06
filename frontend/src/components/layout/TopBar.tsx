@@ -67,19 +67,37 @@ export default function TopBar() {
 
   return (
     <header
-      className="h-14 flex items-center justify-between px-5 shrink-0 gap-4"
+      className="app-topbar h-14 flex items-center justify-between px-5 shrink-0 gap-4"
       style={{
         background: 'rgba(7,11,20,0.95)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
         borderBottom: '1px solid rgba(168,85,247,0.1)',
-        position: 'relative',
+        zIndex: 50,
       }}
     >
       <style>{`
         html:not(.dark) header.app-topbar {
           background: rgba(255,255,255,0.92) !important;
           border-bottom-color: rgba(147,51,234,0.1) !important;
+        }
+        html:not(.dark) .app-topbar .input { color: #0f172a; }
+        html:not(.dark) .app-topbar .input::placeholder { color: #94a3b8; }
+        .app-dropdown {
+          position: absolute;
+          top: calc(100% + 8px);
+          right: 0;
+          z-index: 1000;
+          background: linear-gradient(145deg, #111827 0%, #070b14 100%);
+          border: 1px solid rgba(168,85,247,0.18);
+          border-radius: 16px;
+          box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03);
+          overflow: hidden;
+        }
+        html:not(.dark) .app-dropdown {
+          background: #ffffff;
+          border-color: rgba(0,0,0,0.08);
+          box-shadow: 0 12px 40px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.04);
         }
       `}</style>
       {/* Search */}
@@ -115,9 +133,9 @@ export default function TopBar() {
         <button
           onClick={toggleTheme}
           className="p-2 rounded-lg transition-all"
-        style={{ color: 'rgba(148,163,184,0.7)', background: 'transparent' }}
+        style={{ color: 'var(--text-3)', background: 'transparent' }}
         onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(168,85,247,0.1)'; b.style.color = '#c084fc' }}
-        onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'rgba(148,163,184,0.7)' }}
+        onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'var(--text-3)' }}
         >
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
         </button>
@@ -127,9 +145,9 @@ export default function TopBar() {
           <button
             onClick={() => { setShowNotifs(!showNotifs); setShowUser(false) }}
             className="relative p-2 rounded-lg transition-all"
-            style={{ color: 'rgba(148,163,184,0.7)', background: 'transparent' }}
+            style={{ color: 'var(--text-3)', background: 'transparent' }}
             onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(168,85,247,0.1)'; b.style.color = '#c084fc' }}
-            onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'rgba(148,163,184,0.7)' }}
+            onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'var(--text-3)' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
@@ -142,7 +160,7 @@ export default function TopBar() {
           </button>
 
           {showNotifs && (
-            <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-surface-2 border border-light-3 dark:border-white/8 rounded-2xl shadow-card dark:shadow-card-dark z-50 overflow-hidden animate-scale-in">
+            <div className="app-dropdown w-80 animate-scale-in">
               <div className="px-4 py-3 border-b border-light-3 dark:border-white/5 flex items-center justify-between">
                 <span className="text-sm font-semibold text-gray-900 dark:text-white">Notifications</span>
                 {unreadCount > 0 && (
@@ -201,7 +219,7 @@ export default function TopBar() {
           </button>
 
           {showUser && (
-            <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-surface-2 border border-light-3 dark:border-white/8 rounded-2xl shadow-card dark:shadow-card-dark z-50 overflow-hidden animate-scale-in">
+            <div className="app-dropdown w-48 animate-scale-in">
               <div className="px-4 py-3 border-b border-light-3 dark:border-white/5">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{user?.fullName}</p>
                 <p className="text-xs text-gray-400 truncate">{user?.email}</p>

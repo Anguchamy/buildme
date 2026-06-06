@@ -121,7 +121,7 @@ export default function Sidebar() {
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               }}>build.me</span>
             </div>
-            <div style={{ fontSize: 10, color: 'rgba(148,163,184,0.6)', marginTop: 2, letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 2, letterSpacing: '0.05em' }}>
               SOCIAL PLANNER
             </div>
           </div>
@@ -148,7 +148,7 @@ export default function Sidebar() {
               borderRadius: 10,
               padding: '7px 28px 7px 10px',
               fontSize: 12,
-              color: '#e2e8f0',
+              color: 'var(--text-2)',
               outline: 'none',
               cursor: 'pointer',
               appearance: 'none',
@@ -172,7 +172,7 @@ export default function Sidebar() {
 
       {/* ── Navigation ── */}
       <nav style={{ flex: 1, padding: '12px 8px', overflowY: 'auto', position: 'relative', zIndex: 1 }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, paddingLeft: 8, color: 'rgba(148,163,184,0.4)' }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 8, paddingLeft: 8, color: 'var(--text-4)' }}>
           Menu
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -244,10 +244,10 @@ export default function Sidebar() {
             {initial}
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 600, color: '#e2e8f0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', lineHeight: 1.2 }}>
               {user?.fullName}
             </div>
-            <div style={{ fontSize: 10, color: 'rgba(148,163,184,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
+            <div style={{ fontSize: 10, color: 'var(--text-3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', marginTop: 1 }}>
               {user?.email}
             </div>
           </div>

@@ -17,7 +17,7 @@ function SectionCard({ children, accentColor = '#a855f7' }: { children: React.Re
   return (
     <div style={{
       borderRadius: 16, padding: '18px 20px',
-      background: 'linear-gradient(145deg, #111827, #070b14)',
+      background: 'var(--bg-elev-1)',
       border: '1px solid rgba(255,255,255,0.06)',
       boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 40px rgba(0,0,0,0.5)',
       position: 'relative', overflow: 'hidden',
@@ -68,13 +68,13 @@ export default function Dashboard() {
       {/* ── Header ───────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: 12 }}>
         <div>
-          <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', color: '#f1f5f9', marginBottom: 4 }}>
+          <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-1)', marginBottom: 4 }}>
             {greeting},{' '}
             <span style={{ background: 'linear-gradient(135deg, #c084fc, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               {user?.fullName?.split(' ')[0]}!
             </span>
           </h1>
-          <p style={{ fontSize: 13, color: 'rgba(148,163,184,0.6)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <p style={{ fontSize: 13, color: 'var(--text-3)', display: 'flex', alignItems: 'center', gap: 6 }}>
             <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#34d399', boxShadow: '0 0 8px rgba(52,211,153,0.7)', display: 'inline-block' }} />
             {workspace ? workspace.name : 'Select a workspace'} · {format(new Date(), 'EEEE, MMMM d')}
           </p>
@@ -102,7 +102,7 @@ export default function Dashboard() {
         {/* Left: Recent posts */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <h2 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0' }}>Recent Posts</h2>
+            <h2 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-2)' }}>Recent Posts</h2>
             <Link to="/app/calendar"><Button variant="ghost" size="xs">View calendar →</Button></Link>
           </div>
 
@@ -115,7 +115,7 @@ export default function Dashboard() {
           ) : (
             <div style={{
               borderRadius: 16, padding: '48px 24px', textAlign: 'center',
-              background: 'linear-gradient(145deg, #111827, #070b14)',
+              background: 'var(--bg-elev-1)',
               border: '1px solid rgba(168,85,247,0.1)',
               boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
             }}>
@@ -126,8 +126,8 @@ export default function Dashboard() {
                 fontSize: 24, margin: '0 auto 16px',
                 boxShadow: '0 0 20px rgba(168,85,247,0.15)',
               }}>✏️</div>
-              <p style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', marginBottom: 6 }}>No posts yet</p>
-              <p style={{ fontSize: 13, color: 'rgba(148,163,184,0.6)', marginBottom: 20 }}>Create your first post to get started</p>
+              <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-2)', marginBottom: 6 }}>No posts yet</p>
+              <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 20 }}>Create your first post to get started</p>
               <Button variant="gradient" onClick={() => openComposer()} glow>Create your first post</Button>
             </div>
           )}
@@ -138,10 +138,10 @@ export default function Dashboard() {
 
           {/* Activity summary */}
           <SectionCard accentColor="#a855f7">
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', marginBottom: 14 }}>Activity Summary</h3>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', marginBottom: 14 }}>Activity Summary</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
               {[
-                { label: 'Drafts',      value: draftCount,                     color: 'rgba(148,163,184,0.5)' },
+                { label: 'Drafts',      value: draftCount,                     color: 'var(--text-4)' },
                 { label: 'Scheduled',   value: scheduledCount,                  color: '#a855f7' },
                 { label: 'Published',   value: publishedCount,                  color: '#34d399' },
                 { label: 'Engagement',  value: totalEngagement.toLocaleString(), color: '#22d3ee' },
@@ -149,9 +149,9 @@ export default function Dashboard() {
                 <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ width: 7, height: 7, borderRadius: '50%', background: item.color, boxShadow: `0 0 6px ${item.color}`, flexShrink: 0 }} />
-                    <span style={{ fontSize: 12, color: 'rgba(148,163,184,0.8)' }}>{item.label}</span>
+                    <span style={{ fontSize: 12, color: 'var(--text-2)' }}>{item.label}</span>
                   </div>
-                  <span style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', fontVariantNumeric: 'tabular-nums' }}>{item.value}</span>
+                  <span style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', fontVariantNumeric: 'tabular-nums' }}>{item.value}</span>
                 </div>
               ))}
             </div>
@@ -160,7 +160,7 @@ export default function Dashboard() {
           {/* Active platforms */}
           {platformActivity.length > 0 && (
             <SectionCard accentColor="#22d3ee">
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', marginBottom: 14 }}>Active Platforms</h3>
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', marginBottom: 14 }}>Active Platforms</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {platformActivity.map(({ platform, count }) => (
                   <div key={platform} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -173,11 +173,11 @@ export default function Dashboard() {
                       }}>
                         {getPlatformIcon(platform as Platform)}
                       </span>
-                      <span style={{ fontSize: 12, color: 'rgba(148,163,184,0.8)', textTransform: 'capitalize' }}>
+                      <span style={{ fontSize: 12, color: 'var(--text-2)', textTransform: 'capitalize' }}>
                         {platform.charAt(0) + platform.slice(1).toLowerCase()}
                       </span>
                     </div>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: '#e2e8f0' }}>{count} posts</span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--text-2)' }}>{count} posts</span>
                   </div>
                 ))}
               </div>
@@ -187,7 +187,7 @@ export default function Dashboard() {
           {/* Upcoming posts */}
           {upcomingPosts.length > 0 && (
             <SectionCard accentColor="#34d399">
-              <h3 style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', marginBottom: 14 }}>Upcoming</h3>
+              <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', marginBottom: 14 }}>Upcoming</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {upcomingPosts.map((post) => (
                   <div
@@ -205,7 +205,7 @@ export default function Dashboard() {
                       <p style={{ fontSize: 11, color: 'rgba(226,232,240,0.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {post.caption?.slice(0, 50) ?? 'No caption'}
                       </p>
-                      <p style={{ fontSize: 10, color: 'rgba(148,163,184,0.5)', marginTop: 2 }}>
+                      <p style={{ fontSize: 10, color: 'var(--text-4)', marginTop: 2 }}>
                         {format(new Date(post.scheduledAt!), 'MMM d, h:mm a')}
                       </p>
                     </div>
@@ -217,7 +217,7 @@ export default function Dashboard() {
 
           {/* Quick actions */}
           <SectionCard accentColor="#f472b6">
-            <h3 style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', marginBottom: 12 }}>Quick Actions</h3>
+            <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', marginBottom: 12 }}>Quick Actions</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {[
                 { label: 'New Post',  to: '/app/compose',    icon: '✏️', color: '#a855f7' },
@@ -231,11 +231,11 @@ export default function Dashboard() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 10,
                     background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
-                    fontSize: 12, fontWeight: 600, color: 'rgba(148,163,184,0.8)',
+                    fontSize: 12, fontWeight: 600, color: 'var(--text-2)',
                     textDecoration: 'none', transition: 'all 0.2s',
                   }}
                   onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = `${a.color}12`; (e.currentTarget as HTMLAnchorElement).style.borderColor = `${a.color}30`; (e.currentTarget as HTMLAnchorElement).style.color = a.color }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.03)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLAnchorElement).style.color = 'rgba(148,163,184,0.8)' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.03)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-2)' }}
                 >
                   <span style={{ fontSize: 14 }}>{a.icon}</span>
                   {a.label}

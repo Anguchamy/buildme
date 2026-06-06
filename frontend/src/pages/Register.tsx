@@ -39,7 +39,7 @@ export default function Register() {
   return (
     <div style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: '#03040a', position: 'relative', overflow: 'hidden', padding: 24,
+      background: 'var(--bg-app)', position: 'relative', overflow: 'hidden', padding: 24,
     }}>
       {/* Ambient orbs */}
       <Orb style={{ width: 600, height: 600, top: '-20%', right: '10%', background: 'radial-gradient(circle, rgba(147,51,234,0.18) 0%, transparent 70%)' }} />
@@ -74,8 +74,8 @@ export default function Register() {
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>build.me</span>
           </Link>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.03em', marginBottom: 6 }}>Create your account</h1>
-          <p style={{ fontSize: 14, color: 'rgba(148,163,184,0.7)' }}>Free forever · No card needed</p>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-1)', letterSpacing: '-0.03em', marginBottom: 6 }}>Create your account</h1>
+          <p style={{ fontSize: 14, color: 'var(--text-3)' }}>Free forever · No card needed</p>
         </div>
 
         {/* Benefit chips */}
@@ -100,8 +100,8 @@ export default function Register() {
             borderRadius: 14, padding: '14px 18px', marginBottom: 16, textAlign: 'center',
           }}>
             <p style={{ fontSize: 14, fontWeight: 700, color: '#34d399', marginBottom: 4 }}>🎉 Account created!</p>
-            <p style={{ fontSize: 12, color: 'rgba(148,163,184,0.7)', lineHeight: 1.6 }}>
-              We sent a verification link to <strong style={{ color: '#e2e8f0' }}>{getValues('email')}</strong>.<br />
+            <p style={{ fontSize: 12, color: 'var(--text-3)', lineHeight: 1.6 }}>
+              We sent a verification link to <strong style={{ color: 'var(--text-2)' }}>{getValues('email')}</strong>.<br />
               Please check your inbox before signing in.
             </p>
           </div>
@@ -114,7 +114,7 @@ export default function Register() {
           onMouseLeave={onMouseLeave}
           style={{
             borderRadius: 20, padding: 28, position: 'relative', overflow: 'hidden',
-            background: 'linear-gradient(145deg, #111827 0%, #070b14 100%)',
+            background: 'var(--bg-elev-1)',
             border: '1px solid rgba(168,85,247,0.15)',
             boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset, 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03)',
             transition: 'transform 0.12s ease',
@@ -154,7 +154,7 @@ export default function Register() {
                 <button
                   type="button"
                   onClick={() => setShowPass(!showPass)}
-                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.5)', padding: 0 }}
+                  style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-4)', padding: 0 }}
                 >
                   {showPass
                     ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
@@ -181,13 +181,13 @@ export default function Register() {
         </div>
 
         {/* Footer */}
-        <p style={{ textAlign: 'center', fontSize: 11, color: 'rgba(148,163,184,0.4)', marginTop: 12 }}>
+        <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-4)', marginTop: 12 }}>
           By signing up you agree to our{' '}
           <span style={{ color: '#a855f7', cursor: 'pointer' }}>Terms</span> &amp;{' '}
           <span style={{ color: '#a855f7', cursor: 'pointer' }}>Privacy Policy</span>
         </p>
 
-        <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(148,163,184,0.6)', marginTop: 16 }}>
+        <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-3)', marginTop: 16 }}>
           Already have an account?{' '}
           <Link to="/login" style={{
             background: 'linear-gradient(135deg, #a855f7, #22d3ee)',

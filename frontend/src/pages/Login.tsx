@@ -57,7 +57,7 @@ export default function Login() {
   return (
     <div style={{
       minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-      background: '#03040a', position: 'relative', overflow: 'hidden', padding: 24,
+      background: 'var(--bg-app)', position: 'relative', overflow: 'hidden', padding: 24,
     }}>
       {/* Ambient orbs */}
       <Orb style={{ width: 600, height: 600, top: '-20%', left: '50%', transform: 'translateX(-50%)', background: 'radial-gradient(circle, rgba(147,51,234,0.2) 0%, transparent 70%)' }} />
@@ -92,10 +92,10 @@ export default function Login() {
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>build.me</span>
           </Link>
-          <h1 style={{ fontSize: 26, fontWeight: 800, color: '#f1f5f9', letterSpacing: '-0.03em', marginBottom: 6 }}>
+          <h1 style={{ fontSize: 26, fontWeight: 800, color: 'var(--text-1)', letterSpacing: '-0.03em', marginBottom: 6 }}>
             Welcome back
           </h1>
-          <p style={{ fontSize: 14, color: 'rgba(148,163,184,0.7)' }}>Sign in to your workspace</p>
+          <p style={{ fontSize: 14, color: 'var(--text-3)' }}>Sign in to your workspace</p>
         </div>
 
         {/* 3D Card */}
@@ -105,7 +105,7 @@ export default function Login() {
           onMouseLeave={onMouseLeave}
           style={{
             borderRadius: 20, padding: 28, position: 'relative', overflow: 'hidden',
-            background: 'linear-gradient(145deg, #111827 0%, #070b14 100%)',
+            background: 'var(--bg-elev-1)',
             border: '1px solid rgba(168,85,247,0.15)',
             boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset, 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03)',
             transition: 'transform 0.12s ease',
@@ -151,7 +151,7 @@ export default function Login() {
                   onClick={() => setShowPass(!showPass)}
                   style={{
                     position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
-                    background: 'none', border: 'none', cursor: 'pointer', color: 'rgba(148,163,184,0.5)', padding: 0,
+                    background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-4)', padding: 0,
                   }}
                 >
                   {showPass
@@ -200,7 +200,7 @@ export default function Login() {
         </div>
 
         {/* Footer */}
-        <p style={{ textAlign: 'center', fontSize: 13, color: 'rgba(148,163,184,0.6)', marginTop: 20 }}>
+        <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-3)', marginTop: 20 }}>
           Don't have an account?{' '}
           <Link to="/register" style={{
             background: 'linear-gradient(135deg, #a855f7, #22d3ee)',

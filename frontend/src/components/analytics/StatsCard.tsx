@@ -59,7 +59,7 @@ export default function StatsCard({ label, value, change, icon, accent = 'brand'
         overflow: 'hidden',
         cursor: 'default',
         transition: 'transform 0.12s ease, box-shadow 0.12s ease',
-        background: 'linear-gradient(145deg, #111827 0%, #070b14 100%)',
+        background: 'var(--bg-elev-1)',
         border: '1px solid rgba(255,255,255,0.06)',
         boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset, 0 16px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)',
         transformStyle: 'preserve-3d',
@@ -136,7 +136,7 @@ export default function StatsCard({ label, value, change, icon, accent = 'brand'
         }}>
           {value}
         </p>
-        <p style={{ fontSize: '0.72rem', fontWeight: 500, color: 'rgba(148,163,184,0.8)', letterSpacing: '0.02em' }}>
+        <p style={{ fontSize: '0.72rem', fontWeight: 500, color: 'var(--text-2)', letterSpacing: '0.02em' }}>
           {label}
         </p>
       </div>

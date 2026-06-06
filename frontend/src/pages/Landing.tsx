@@ -37,13 +37,13 @@ function MockCalendar() {
   ]
   return (
     <div style={{
-      background: 'linear-gradient(145deg, #111827, #070b14)',
+      background: 'var(--bg-elev-1)',
       border: '1px solid rgba(168,85,247,0.2)', borderRadius: 16,
       padding: 16, width: 272,
       boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 24px 80px rgba(0,0,0,0.7), 0 0 40px rgba(168,85,247,0.1)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#e2e8f0' }}>June 2026</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)' }}>June 2026</span>
         <div style={{ display: 'flex', gap: 4 }}>
           {['#f87171','#fbbf24','#34d399'].map(c => <span key={c} style={{ width: 8, height: 8, borderRadius: '50%', background: c, boxShadow: `0 0 6px ${c}` }} />)}
         </div>
@@ -51,7 +51,7 @@ function MockCalendar() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5,1fr)', gap: 6, marginBottom: 10 }}>
         {['M','T','W','T','F'].map((d, i) => (
           <div key={i}>
-            <p style={{ fontSize: 9, color: 'rgba(148,163,184,0.5)', textAlign: 'center', marginBottom: 4 }}>{d}</p>
+            <p style={{ fontSize: 9, color: 'var(--text-4)', textAlign: 'center', marginBottom: 4 }}>{d}</p>
             <div style={{
               aspectRatio: '1', borderRadius: 8, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14,
               background: posts[i] ? `${posts[i].color}22` : 'rgba(255,255,255,0.04)',
@@ -69,7 +69,7 @@ function MockCalendar() {
           background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)',
         }}>
           <span style={{ fontSize: 12 }}>{p.icon}</span>
-          <span style={{ fontSize: 10, color: 'rgba(148,163,184,0.8)', flex: 1 }}>{p.label}</span>
+          <span style={{ fontSize: 10, color: 'var(--text-2)', flex: 1 }}>{p.label}</span>
           <span style={{ fontSize: 9, fontWeight: 700, color: '#34d399', background: 'rgba(52,211,153,0.1)', padding: '2px 5px', borderRadius: 4 }}>✓</span>
         </div>
       ))}
@@ -81,13 +81,13 @@ function MockAnalytics() {
   const bars = [35, 55, 42, 78, 52, 92, 68]
   return (
     <div style={{
-      background: 'linear-gradient(145deg, #111827, #070b14)',
+      background: 'var(--bg-elev-1)',
       border: '1px solid rgba(6,182,212,0.2)', borderRadius: 16,
       padding: 16, width: 214,
       boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 24px 80px rgba(0,0,0,0.7), 0 0 40px rgba(6,182,212,0.1)',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#e2e8f0' }}>Analytics</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)' }}>Analytics</span>
         <span style={{ fontSize: 10, fontWeight: 700, color: '#34d399', background: 'rgba(52,211,153,0.12)', border: '1px solid rgba(52,211,153,0.2)', padding: '2px 7px', borderRadius: 6 }}>▲ 24%</span>
       </div>
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: 3, height: 60, marginBottom: 6 }}>
@@ -104,14 +104,14 @@ function MockAnalytics() {
       </div>
       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10 }}>
         {['M','T','W','T','F','S','S'].map((d, i) => (
-          <span key={i} style={{ fontSize: 9, color: 'rgba(148,163,184,0.4)', flex: 1, textAlign: 'center' }}>{d}</span>
+          <span key={i} style={{ fontSize: 9, color: 'var(--text-4)', flex: 1, textAlign: 'center' }}>{d}</span>
         ))}
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6 }}>
         {[{l:'Reach',v:'24.5K',c:'#a855f7'},{l:'Likes',v:'3.2K',c:'#f472b6'}].map(s => (
           <div key={s.l} style={{ background: 'rgba(255,255,255,0.03)', borderRadius: 8, padding: '8px 10px', border: '1px solid rgba(255,255,255,0.05)' }}>
             <p style={{ fontSize: 14, fontWeight: 800, color: s.c, textShadow: `0 0 12px ${s.c}60` }}>{s.v}</p>
-            <p style={{ fontSize: 9, color: 'rgba(148,163,184,0.5)', marginTop: 1 }}>{s.l}</p>
+            <p style={{ fontSize: 9, color: 'var(--text-4)', marginTop: 1 }}>{s.l}</p>
           </div>
         ))}
       </div>
@@ -122,14 +122,14 @@ function MockAnalytics() {
 function MockComposer() {
   return (
     <div style={{
-      background: 'linear-gradient(145deg, #111827, #070b14)',
+      background: 'var(--bg-elev-1)',
       border: '1px solid rgba(244,114,182,0.2)', borderRadius: 16,
       padding: 14, width: 232,
       boxShadow: '0 1px 0 rgba(255,255,255,0.06) inset, 0 24px 80px rgba(0,0,0,0.7), 0 0 40px rgba(244,114,182,0.08)',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
         <div style={{ width: 24, height: 24, borderRadius: '50%', background: 'linear-gradient(135deg,#9333ea,#06b6d4)', boxShadow: '0 0 10px rgba(147,51,234,0.5)' }} />
-        <span style={{ fontSize: 11, fontWeight: 700, color: '#e2e8f0', flex: 1 }}>AI Caption</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-2)', flex: 1 }}>AI Caption</span>
         <span style={{ fontSize: 9, fontWeight: 700, color: '#a855f7', background: 'rgba(168,85,247,0.12)', padding: '2px 6px', borderRadius: 6, border: '1px solid rgba(168,85,247,0.2)' }}>GPT-4o</span>
       </div>
       <div style={{ background: 'rgba(168,85,247,0.06)', borderRadius: 10, padding: 10, marginBottom: 10, border: '1px solid rgba(168,85,247,0.12)' }}>
@@ -214,7 +214,7 @@ export default function Landing() {
   }
 
   return (
-    <div style={{ background: '#03040a', minHeight: '100vh', overflowX: 'hidden' }}>
+    <div style={{ background: 'var(--bg-app)', minHeight: '100vh', overflowX: 'hidden' }}>
 
       {/* ── Nav ─────────────────────────────────────────────── */}
       <nav style={{
@@ -244,11 +244,11 @@ export default function Landing() {
           </div>
 
           {/* Links */}
-          <div style={{ display: 'flex', gap: 28, fontSize: 13, color: 'rgba(148,163,184,0.7)' }} className="hidden md:flex">
+          <div style={{ display: 'flex', gap: 28, fontSize: 13, color: 'var(--text-3)' }} className="hidden md:flex">
             {['Features','Platforms','Pricing','Reviews'].map(label => (
               <a key={label} href={`#${label.toLowerCase()}`} style={{ textDecoration: 'none', color: 'inherit', transition: 'color 0.2s' }}
                 onMouseEnter={e => (e.currentTarget.style.color = '#c084fc')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(148,163,184,0.7)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-3)')}
               >{label}</a>
             ))}
           </div>
@@ -257,19 +257,19 @@ export default function Landing() {
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <button onClick={toggleTheme} style={{
               padding: 8, borderRadius: 8, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-              color: 'rgba(148,163,184,0.7)', cursor: 'pointer', transition: 'all 0.2s',
+              color: 'var(--text-3)', cursor: 'pointer', transition: 'all 0.2s',
             }}
               onMouseEnter={e => { (e.currentTarget as HTMLButtonElement).style.color = '#c084fc'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(168,85,247,0.3)' }}
-              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'rgba(148,163,184,0.7)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.08)' }}
+              onMouseLeave={e => { (e.currentTarget as HTMLButtonElement).style.color = 'var(--text-3)'; (e.currentTarget as HTMLButtonElement).style.borderColor = 'rgba(255,255,255,0.08)' }}
             >
               {theme === 'dark'
                 ? <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
                 : <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
               }
             </button>
-            <Link to="/login" style={{ fontSize: 13, fontWeight: 500, color: 'rgba(148,163,184,0.8)', textDecoration: 'none' }}
-              onMouseEnter={e => (e.currentTarget.style.color = '#e2e8f0')}
-              onMouseLeave={e => (e.currentTarget.style.color = 'rgba(148,163,184,0.8)')}
+            <Link to="/login" style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-2)', textDecoration: 'none' }}
+              onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-2)')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-2)')}
             >Login</Link>
             <Link to="/register"><Button variant="gradient" size="sm">Get Started Free</Button></Link>
           </div>
@@ -309,7 +309,7 @@ export default function Landing() {
               The all-in-one social media command center
             </div>
 
-            <h1 style={{ fontSize: 'clamp(40px,7vw,80px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.04em', marginBottom: 24, color: '#f1f5f9' }}>
+            <h1 style={{ fontSize: 'clamp(40px,7vw,80px)', fontWeight: 900, lineHeight: 1.05, letterSpacing: '-0.04em', marginBottom: 24, color: 'var(--text-1)' }}>
               Plan, Schedule &{' '}
               <span style={{ background: 'linear-gradient(135deg, #a855f7, #c084fc 40%, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                 Grow
@@ -317,7 +317,7 @@ export default function Landing() {
               <br />your Social Presence
             </h1>
 
-            <p style={{ fontSize: 18, color: 'rgba(148,163,184,0.8)', marginBottom: 36, maxWidth: 580, margin: '0 auto 36px', lineHeight: 1.7 }}>
+            <p style={{ fontSize: 18, color: 'var(--text-2)', marginBottom: 36, maxWidth: 580, margin: '0 auto 36px', lineHeight: 1.7 }}>
               Build.me unifies all your social channels in one powerful workspace — AI captions, visual scheduling, deep analytics, and media management.
             </p>
 
@@ -325,7 +325,7 @@ export default function Landing() {
               <Link to="/register"><Button variant="gradient" size="lg" glow rightIcon={<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>}>Start for Free</Button></Link>
               <Link to="/login"><Button variant="glass" size="lg">View Demo</Button></Link>
             </div>
-            <p style={{ fontSize: 12, color: 'rgba(148,163,184,0.4)', marginBottom: 64 }}>No credit card required · Free forever plan available</p>
+            <p style={{ fontSize: 12, color: 'var(--text-4)', marginBottom: 64 }}>No credit card required · Free forever plan available</p>
           </motion.div>
 
           {/* Floating UI cards */}
@@ -365,7 +365,7 @@ export default function Landing() {
               <p style={{ fontSize: 32, fontWeight: 900, letterSpacing: '-0.04em', background: 'linear-gradient(135deg,#a855f7,#22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text', lineHeight: 1 }}>
                 <AnimatedCounter end={s.value} suffix={s.suffix} />
               </p>
-              <p style={{ fontSize: 12, color: 'rgba(148,163,184,0.6)', marginTop: 6 }}>{s.label}</p>
+              <p style={{ fontSize: 12, color: 'var(--text-3)', marginTop: 6 }}>{s.label}</p>
             </motion.div>
           ))}
         </div>
@@ -376,8 +376,8 @@ export default function Landing() {
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 64 }}>
             <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#a855f7', background: 'rgba(168,85,247,0.1)', padding: '4px 12px', borderRadius: 99, border: '1px solid rgba(168,85,247,0.2)', display: 'inline-block', marginBottom: 16 }}>Features</span>
-            <h2 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-0.03em', color: '#f1f5f9', marginBottom: 12 }}>Everything you need to grow</h2>
-            <p style={{ fontSize: 16, color: 'rgba(148,163,184,0.7)', maxWidth: 500, margin: '0 auto' }}>A complete toolkit built for modern creators, marketers, and agencies.</p>
+            <h2 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text-1)', marginBottom: 12 }}>Everything you need to grow</h2>
+            <p style={{ fontSize: 16, color: 'var(--text-3)', maxWidth: 500, margin: '0 auto' }}>A complete toolkit built for modern creators, marketers, and agencies.</p>
           </motion.div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(320px,1fr))', gap: 16 }}>
@@ -385,7 +385,7 @@ export default function Landing() {
               <motion.div key={f.title} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.07 }} viewport={{ once: true }}
                 style={{
                   borderRadius: 16, padding: 24, position: 'relative', overflow: 'hidden',
-                  background: 'linear-gradient(145deg, #111827, #070b14)',
+                  background: 'var(--bg-elev-1)',
                   border: '1px solid rgba(255,255,255,0.06)',
                   boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 16px 48px rgba(0,0,0,0.5)',
                   cursor: 'default', transition: 'all 0.3s ease',
@@ -399,8 +399,8 @@ export default function Landing() {
                   background: `${f.color}15`, border: `1px solid ${f.color}30`,
                   boxShadow: `0 0 16px ${f.color}20`, marginBottom: 16,
                 }}>{f.icon}</div>
-                <h3 style={{ fontSize: 15, fontWeight: 700, color: '#e2e8f0', marginBottom: 8 }}>{f.title}</h3>
-                <p style={{ fontSize: 13, color: 'rgba(148,163,184,0.7)', lineHeight: 1.6 }}>{f.desc}</p>
+                <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-2)', marginBottom: 8 }}>{f.title}</h3>
+                <p style={{ fontSize: 13, color: 'var(--text-3)', lineHeight: 1.6 }}>{f.desc}</p>
               </motion.div>
             ))}
           </div>
@@ -412,8 +412,8 @@ export default function Landing() {
         <div style={{ maxWidth: 900, margin: '0 auto', textAlign: 'center' }}>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
             <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#22d3ee', background: 'rgba(34,211,238,0.08)', padding: '4px 12px', borderRadius: 99, border: '1px solid rgba(34,211,238,0.2)', display: 'inline-block', marginBottom: 16 }}>Integrations</span>
-            <h2 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-0.03em', color: '#f1f5f9', marginBottom: 12 }}>7 platforms, one workspace</h2>
-            <p style={{ fontSize: 16, color: 'rgba(148,163,184,0.7)', marginBottom: 48, maxWidth: 480, margin: '0 auto 48px' }}>Post to every major platform from a single composer. No tab switching, no re-uploading.</p>
+            <h2 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text-1)', marginBottom: 12 }}>7 platforms, one workspace</h2>
+            <p style={{ fontSize: 16, color: 'var(--text-3)', marginBottom: 48, maxWidth: 480, margin: '0 auto 48px' }}>Post to every major platform from a single composer. No tab switching, no re-uploading.</p>
           </motion.div>
 
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 12 }}>
@@ -427,7 +427,7 @@ export default function Landing() {
                   transition: 'all 0.2s',
                 }}>
                 <span style={{ fontSize: 22 }}>{p.icon}</span>
-                <span style={{ fontSize: 13, fontWeight: 600, color: '#e2e8f0' }}>{p.name}</span>
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-2)' }}>{p.name}</span>
               </motion.div>
             ))}
           </div>
@@ -439,7 +439,7 @@ export default function Landing() {
         <div style={{ maxWidth: 700, margin: '0 auto', textAlign: 'center' }}>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ marginBottom: 48 }}>
             <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#34d399', background: 'rgba(52,211,153,0.08)', padding: '4px 12px', borderRadius: 99, border: '1px solid rgba(52,211,153,0.2)', display: 'inline-block', marginBottom: 16 }}>Testimonials</span>
-            <h2 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-0.03em', color: '#f1f5f9' }}>Loved by creators</h2>
+            <h2 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text-1)' }}>Loved by creators</h2>
           </motion.div>
 
           <div style={{ height: 140, position: 'relative' }}>
@@ -450,8 +450,8 @@ export default function Landing() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <span style={{ fontSize: 28 }}>{testimonials[activeTestimonial].avatar}</span>
                   <div style={{ textAlign: 'left' }}>
-                    <p style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0' }}>{testimonials[activeTestimonial].name}</p>
-                    <p style={{ fontSize: 11, color: 'rgba(148,163,184,0.6)' }}>{testimonials[activeTestimonial].role}</p>
+                    <p style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)' }}>{testimonials[activeTestimonial].name}</p>
+                    <p style={{ fontSize: 11, color: 'var(--text-3)' }}>{testimonials[activeTestimonial].role}</p>
                   </div>
                 </div>
               </motion.div>
@@ -476,8 +476,8 @@ export default function Landing() {
         <div style={{ maxWidth: 1000, margin: '0 auto' }}>
           <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} style={{ textAlign: 'center', marginBottom: 56 }}>
             <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#fbbf24', background: 'rgba(251,191,36,0.08)', padding: '4px 12px', borderRadius: 99, border: '1px solid rgba(251,191,36,0.2)', display: 'inline-block', marginBottom: 16 }}>Pricing</span>
-            <h2 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-0.03em', color: '#f1f5f9', marginBottom: 10 }}>Simple, transparent pricing</h2>
-            <p style={{ fontSize: 16, color: 'rgba(148,163,184,0.7)' }}>Start free. Upgrade when you're ready.</p>
+            <h2 style={{ fontSize: 40, fontWeight: 900, letterSpacing: '-0.03em', color: 'var(--text-1)', marginBottom: 10 }}>Simple, transparent pricing</h2>
+            <p style={{ fontSize: 16, color: 'var(--text-3)' }}>Start free. Upgrade when you're ready.</p>
           </motion.div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill,minmax(280px,1fr))', gap: 20 }}>
@@ -485,7 +485,7 @@ export default function Landing() {
               <motion.div key={plan.name} initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }} viewport={{ once: true }}
                 style={{
                   borderRadius: 20, padding: 28, position: 'relative', overflow: 'hidden',
-                  background: plan.popular ? 'linear-gradient(145deg, #1a1035, #0d0b1e)' : 'linear-gradient(145deg, #111827, #070b14)',
+                  background: plan.popular ? 'linear-gradient(145deg, #1a1035, #0d0b1e)' : 'var(--bg-elev-1)',
                   border: plan.popular ? '1px solid rgba(168,85,247,0.3)' : '1px solid rgba(255,255,255,0.06)',
                   boxShadow: plan.popular ? '0 1px 0 rgba(255,255,255,0.06) inset, 0 24px 80px rgba(0,0,0,0.6), 0 0 60px rgba(168,85,247,0.12)' : '0 1px 0 rgba(255,255,255,0.04) inset, 0 16px 48px rgba(0,0,0,0.5)',
                 }}
@@ -505,10 +505,10 @@ export default function Landing() {
                 )}
 
                 <div style={{ marginBottom: 20, marginTop: plan.popular ? 8 : 0 }}>
-                  <h3 style={{ fontSize: 14, fontWeight: 700, color: '#e2e8f0', marginBottom: 6 }}>{plan.name}</h3>
+                  <h3 style={{ fontSize: 14, fontWeight: 700, color: 'var(--text-2)', marginBottom: 6 }}>{plan.name}</h3>
                   <div>
-                    <span style={{ fontSize: 42, fontWeight: 900, letterSpacing: '-0.04em', color: '#f1f5f9', lineHeight: 1 }}>{plan.price}</span>
-                    <span style={{ fontSize: 13, color: 'rgba(148,163,184,0.5)', marginLeft: 4 }}>{plan.period}</span>
+                    <span style={{ fontSize: 42, fontWeight: 900, letterSpacing: '-0.04em', color: 'var(--text-1)', lineHeight: 1 }}>{plan.price}</span>
+                    <span style={{ fontSize: 13, color: 'var(--text-4)', marginLeft: 4 }}>{plan.period}</span>
                   </div>
                 </div>
 
@@ -547,17 +547,17 @@ export default function Landing() {
             </svg>
           </div>
           <h2 style={{ fontSize: 'clamp(32px,5vw,52px)', fontWeight: 900, letterSpacing: '-0.04em', marginBottom: 16, lineHeight: 1.1 }}>
-            <span style={{ color: '#f1f5f9' }}>Ready to grow your </span>
+            <span style={{ color: 'var(--text-1)' }}>Ready to grow your </span>
             <span style={{ background: 'linear-gradient(135deg,#a855f7,#22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>social presence?</span>
           </h2>
-          <p style={{ fontSize: 16, color: 'rgba(148,163,184,0.7)', marginBottom: 32, lineHeight: 1.7 }}>
+          <p style={{ fontSize: 16, color: 'var(--text-3)', marginBottom: 32, lineHeight: 1.7 }}>
             Join thousands of creators and brands using build.me every day.
           </p>
           <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
             <Link to="/register"><Button variant="gradient" size="lg" glow>Get Started for Free</Button></Link>
             <Link to="/login"><Button variant="glass" size="lg">Sign in</Button></Link>
           </div>
-          <p style={{ fontSize: 12, color: 'rgba(148,163,184,0.35)', marginTop: 16 }}>No credit card · Cancel anytime · Free forever plan</p>
+          <p style={{ fontSize: 12, color: 'var(--text-4)', marginTop: 16 }}>No credit card · Cancel anytime · Free forever plan</p>
         </motion.div>
       </section>
 
@@ -572,13 +572,13 @@ export default function Landing() {
           </div>
           <div style={{ display: 'flex', gap: 20 }}>
             {['Features','Pricing','Privacy','Terms'].map(l => (
-              <a key={l} href="#" style={{ fontSize: 12, color: 'rgba(148,163,184,0.4)', textDecoration: 'none', transition: 'color 0.2s' }}
-                onMouseEnter={e => (e.currentTarget.style.color = 'rgba(148,163,184,0.8)')}
-                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(148,163,184,0.4)')}
+              <a key={l} href="#" style={{ fontSize: 12, color: 'var(--text-4)', textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text-2)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-4)')}
               >{l}</a>
             ))}
           </div>
-          <p style={{ fontSize: 12, color: 'rgba(148,163,184,0.3)' }}>© 2026 Build.me. All rights reserved.</p>
+          <p style={{ fontSize: 12, color: 'var(--text-4)' }}>© 2026 Build.me. All rights reserved.</p>
         </div>
       </footer>
     </div>

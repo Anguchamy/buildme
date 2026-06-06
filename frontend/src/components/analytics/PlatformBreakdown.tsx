@@ -17,8 +17,8 @@ export default function PlatformBreakdown({ data }: Props) {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', marginBottom: 2 }}>Platform Breakdown</h3>
-          <p style={{ fontSize: 11, color: 'rgba(148,163,184,0.6)' }}>Total interactions by platform</p>
+          <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', marginBottom: 2 }}>Platform Breakdown</h3>
+          <p style={{ fontSize: 11, color: 'var(--text-3)' }}>Total interactions by platform</p>
         </div>
       </div>
 
@@ -27,11 +27,11 @@ export default function PlatformBreakdown({ data }: Props) {
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
           <XAxis
             dataKey="platform"
-            tick={{ fill: 'rgba(148,163,184,0.5)', fontSize: 10 }}
+            tick={{ fill: 'var(--text-4)', fontSize: 10 }}
             axisLine={false} tickLine={false}
             tickFormatter={(v) => v.charAt(0) + v.slice(1).toLowerCase().slice(0, 4)}
           />
-          <YAxis tick={{ fill: 'rgba(148,163,184,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: 'var(--text-4)', fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{
               background: 'rgba(12,18,33,0.95)',
@@ -41,7 +41,7 @@ export default function PlatformBreakdown({ data }: Props) {
               fontSize: 12,
               backdropFilter: 'blur(12px)',
             }}
-            labelStyle={{ color: '#e2e8f0', fontWeight: 700 }}
+            labelStyle={{ color: 'var(--text-2)', fontWeight: 700 }}
             cursor={{ fill: 'rgba(168,85,247,0.05)' }}
           />
           <Bar dataKey="total" radius={[6, 6, 0, 0]}>

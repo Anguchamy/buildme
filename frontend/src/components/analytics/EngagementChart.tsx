@@ -23,10 +23,10 @@ export default function EngagementChart({ data }: Props) {
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
         <div>
-          <h3 style={{ fontSize: 13, fontWeight: 700, color: '#e2e8f0', marginBottom: 2 }}>Engagement Over Time</h3>
-          <p style={{ fontSize: 11, color: 'rgba(148,163,184,0.6)' }}>Likes, comments & shares per day</p>
+          <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', marginBottom: 2 }}>Engagement Over Time</h3>
+          <p style={{ fontSize: 11, color: 'var(--text-3)' }}>Likes, comments & shares per day</p>
         </div>
-        <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'rgba(148,163,184,0.8)' }}>
+        <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--text-2)' }}>
           {[
             { color: '#a855f7', label: 'Likes' },
             { color: '#34d399', label: 'Comments' },
@@ -55,8 +55,8 @@ export default function EngagementChart({ data }: Props) {
             ))}
           </defs>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
-          <XAxis dataKey="date" tick={{ fill: 'rgba(148,163,184,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} />
-          <YAxis tick={{ fill: 'rgba(148,163,184,0.5)', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <XAxis dataKey="date" tick={{ fill: 'var(--text-4)', fontSize: 11 }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fill: 'var(--text-4)', fontSize: 11 }} axisLine={false} tickLine={false} />
           <Tooltip
             contentStyle={{
               background: 'rgba(12,18,33,0.95)',
@@ -66,8 +66,8 @@ export default function EngagementChart({ data }: Props) {
               fontSize: 12,
               backdropFilter: 'blur(12px)',
             }}
-            labelStyle={{ color: '#e2e8f0', fontWeight: 700, marginBottom: 4 }}
-            itemStyle={{ color: 'rgba(148,163,184,0.9)' }}
+            labelStyle={{ color: 'var(--text-2)', fontWeight: 700, marginBottom: 4 }}
+            itemStyle={{ color: 'var(--text-2)' }}
           />
           <Area type="monotone" dataKey="likes"    stroke="#a855f7" strokeWidth={2} fill="url(#likesGrad)"    dot={false} activeDot={{ r: 5, fill: '#a855f7', strokeWidth: 0, filter: 'drop-shadow(0 0 6px #a855f7)' }} />
           <Area type="monotone" dataKey="comments" stroke="#34d399" strokeWidth={2} fill="url(#commentsGrad)" dot={false} activeDot={{ r: 5, fill: '#34d399', strokeWidth: 0, filter: 'drop-shadow(0 0 6px #34d399)' }} />
