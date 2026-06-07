@@ -11,10 +11,10 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const sizes = {
-  xs: 'px-2.5 py-1    text-xs  rounded-lg  gap-1.5',
-  sm: 'px-3.5 py-1.5  text-xs  rounded-xl  gap-1.5',
-  md: 'px-4.5 py-2    text-sm  rounded-xl  gap-2',
-  lg: 'px-6   py-3    text-sm  rounded-2xl gap-2   font-semibold tracking-wide',
+  xs: 'px-2.5 py-1   text-xs rounded-lg  gap-1.5',
+  sm: 'px-3.5 py-1.5 text-xs rounded-xl  gap-1.5',
+  md: 'px-4   py-2   text-sm rounded-xl  gap-2',
+  lg: 'px-6   py-3   text-sm rounded-2xl gap-2 font-semibold tracking-wide',
 }
 
 const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -27,6 +27,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       inlineStyle.background = 'linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #06b6d4 100%)'
       inlineStyle.backgroundSize = '200% 200%'
       inlineStyle.boxShadow = '0 4px 20px rgba(147,51,234,0.5), inset 0 1px 0 rgba(255,255,255,0.12)'
+      inlineStyle.color = '#ffffff'
     }
     if (variant === 'neon') {
       inlineStyle.background = 'transparent'
@@ -34,33 +35,19 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       inlineStyle.boxShadow = '0 0 20px rgba(168,85,247,0.25), inset 0 0 20px rgba(168,85,247,0.05)'
       inlineStyle.color = '#c084fc'
     }
-    if (variant === 'glass') {
-      inlineStyle.background = 'rgba(255,255,255,0.05)'
-      inlineStyle.backdropFilter = 'blur(16px)'
-      inlineStyle.border = '1px solid rgba(255,255,255,0.08)'
-      inlineStyle.boxShadow = 'inset 0 1px 0 rgba(255,255,255,0.06)'
-    }
-    if (variant === 'secondary') {
-      inlineStyle.background = 'rgba(255,255,255,0.04)'
-      inlineStyle.border = '1px solid rgba(255,255,255,0.1)'
-    }
-    if (variant === 'danger') {
-      inlineStyle.background = 'rgba(239,68,68,0.08)'
-      inlineStyle.border = '1px solid rgba(239,68,68,0.25)'
-    }
     if (glow) {
       inlineStyle.boxShadow = (inlineStyle.boxShadow ?? '') + ', 0 0 40px rgba(168,85,247,0.3)'
     }
 
-    /* ── className per variant ── */
+    /* ── className per variant — uses .btn-* CSS classes for theme-aware bg/text ── */
     const variantClass: Record<string, string> = {
-      primary:   'text-white hover:opacity-90 active:opacity-80 active:scale-[0.97]',
-      gradient:  'text-white hover:opacity-90 active:opacity-80 active:scale-[0.97]',
-      secondary: 'text-slate-200 hover:text-white hover:border-purple-500/30 hover:bg-white/8 active:scale-[0.97] dark:text-slate-300',
-      ghost:     'text-slate-400 hover:text-white hover:bg-white/5 active:scale-[0.97]',
+      primary:   'hover:opacity-90 active:opacity-80 active:scale-[0.97]',
+      gradient:  'hover:opacity-90 active:opacity-80 active:scale-[0.97]',
+      secondary: 'btn-secondary active:scale-[0.97]',
+      ghost:     'btn-ghost active:scale-[0.97]',
       neon:      'hover:shadow-neon-purple hover:border-purple-500/80 active:scale-[0.97]',
-      glass:     'text-slate-200 hover:bg-white/8 hover:border-white/15 active:scale-[0.97]',
-      danger:    'text-red-400 hover:text-red-300 hover:bg-red-500/12 active:scale-[0.97]',
+      glass:     'btn-glass active:scale-[0.97]',
+      danger:    'btn-danger active:scale-[0.97]',
     }
 
     return (

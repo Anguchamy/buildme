@@ -31,7 +31,7 @@ export default function PlatformSelector({ selected, onChange }: Props) {
               'flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium transition-all duration-150 border',
               active
                 ? 'text-white border-transparent'
-                : 'bg-surface-3 text-gray-400 border-white/10 hover:border-white/20'
+                : 'platform-pill-unselected'
             )}
             style={active ? { backgroundColor: getPlatformColor(p), borderColor: getPlatformColor(p) } : {}}
           >
