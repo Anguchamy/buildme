@@ -53,13 +53,34 @@ export default function Integrations() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['social-accounts', workspaceId] }),
   })
 
+  const disconnectOneMutation = useMutation({
+    mutationFn: ({ platform, accountId }: { platform: string; accountId: string }) =>
+      integrationApi.disconnectOne(workspaceId!, platform, accountId),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['social-accounts', workspaceId] }),
+  })
+
   if (isLoading) return <PageLoader />
 
   const platforms = Object.values(Platform)
   const connectedCount = accounts.filter((a) => a.connected).length
 
-  const getAccount = (platform: Platform): SocialAccount | undefined =>
-    accounts.find((a) => a.platform === platform && a.connected)
+  const getAccounts = (platform: Platform): SocialAccount[] =>
+    accounts.filter((a) => a.platform === platform && a.connected)
+
+  const oauthErrorMessage = (code: string): string => {
+    switch (code) {
+      case 'session_expired':
+        return 'Your selection link expired. Please reconnect Instagram.'
+      case 'missing_session':
+        return 'Missing connection session. Please reconnect.'
+      case 'no_ig_account':
+        return 'No Instagram Business account is linked to that Facebook account. Link one to a Facebook Page and try again.'
+      case 'oauth_failed':
+        return 'Connection failed. Make sure your OAuth credentials are configured.'
+      default:
+        return `Connection failed: ${code}. Make sure your OAuth credentials are configured.`
+    }
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -102,13 +123,14 @@ export default function Integrations() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/>
           </svg>
-          Connection failed: {oauthError}. Make sure your OAuth credentials are configured.
+          {oauthErrorMessage(oauthError)}
         </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
         {platforms.map((platform) => {
-          const account = getAccount(platform)
+          const connectedAccounts = getAccounts(platform)
+          const hasConnected = connectedAccounts.length > 0
           const color = getPlatformColor(platform)
           const icon = getPlatformIcon(platform)
           const platformName = platform.charAt(0) + platform.slice(1).toLowerCase()
@@ -118,7 +140,7 @@ export default function Integrations() {
             <div
               key={platform}
               className={`card flex flex-col gap-4 transition-all duration-200 ${
-                isComingSoon ? 'opacity-60' : account ? 'hover:border-success-500/20' : 'hover:border-brand-500/20'
+                isComingSoon ? 'opacity-60' : hasConnected ? 'hover:border-success-500/20' : 'hover:border-brand-500/20'
               }`}
             >
               {/* Platform header */}
@@ -137,10 +159,10 @@ export default function Integrations() {
                         Coming Soon
                       </span>
                     )}
-                    {!isComingSoon && account && (
+                    {!isComingSoon && hasConnected && (
                       <span className="flex items-center gap-1 text-[10px] font-semibold text-success-500 bg-success-500/10 px-1.5 py-0.5 rounded-full">
                         <span className="w-1.5 h-1.5 bg-success-500 rounded-full animate-pulse" />
-                        Live
+                        {connectedAccounts.length > 1 ? `${connectedAccounts.length} live` : 'Live'}
                       </span>
                     )}
                   </div>
@@ -155,26 +177,48 @@ export default function Integrations() {
                 <Button size="sm" variant="secondary" className="w-full justify-center" disabled>
                   Coming Soon
                 </Button>
-              ) : account ? (
-                <div className="flex items-center justify-between pt-2 border-t border-light-3 dark:border-white/5">
-                  <div className="min-w-0">
-                    <p className="text-xs font-medium text-gray-600 dark:text-gray-300 truncate">
-                      @{account.handle ?? account.displayName ?? account.accountId}
-                    </p>
-                    {account.tokenExpiresAt && (
-                      <p className="text-[10px] text-gray-400 mt-0.5">
-                        Token expires {new Date(account.tokenExpiresAt).toLocaleDateString()}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    variant="danger"
-                    size="xs"
-                    onClick={() => disconnectMutation.mutate(platform)}
-                    loading={disconnectMutation.isPending}
-                  >
-                    Disconnect
-                  </Button>
+              ) : hasConnected ? (
+                <div className="pt-2 border-t border-light-3 dark:border-white/5 space-y-2">
+                  {connectedAccounts.map((account) => (
+                    <div key={account.id} className="flex items-center justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-xs font-medium text-gray-600 dark:text-gray-300 truncate">
+                          @{account.handle ?? account.displayName ?? account.accountId}
+                        </p>
+                        {account.tokenExpiresAt && (
+                          <p className="text-[10px] text-gray-400 mt-0.5">
+                            Token expires {new Date(account.tokenExpiresAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                      <Button
+                        variant="danger"
+                        size="xs"
+                        onClick={() =>
+                          connectedAccounts.length > 1
+                            ? disconnectOneMutation.mutate({ platform, accountId: account.accountId })
+                            : disconnectMutation.mutate(platform)
+                        }
+                        loading={
+                          (connectedAccounts.length > 1 && disconnectOneMutation.isPending) ||
+                          (connectedAccounts.length === 1 && disconnectMutation.isPending)
+                        }
+                      >
+                        Disconnect
+                      </Button>
+                    </div>
+                  ))}
+                  {platform === Platform.INSTAGRAM && (
+                    <Button
+                      size="xs"
+                      variant="ghost"
+                      className="w-full justify-center"
+                      onClick={() => connectMutation.mutate(platform)}
+                      loading={connectMutation.isPending}
+                    >
+                      + Add another Instagram account
+                    </Button>
+                  )}
                 </div>
               ) : (
                 <Button

@@ -1,5 +1,6 @@
 package com.buildme.service.platform;
 
+import com.buildme.dto.PendingInstagramAccount;
 import com.buildme.exception.CustomExceptions;
 import com.buildme.model.Platform;
 import com.buildme.model.ScheduledPost;
@@ -27,6 +28,7 @@ import org.springframework.stereotype.Service;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -268,7 +270,30 @@ public class InstagramService implements SocialMediaService {
 
     @Override
     public void handleOAuthCallback(Long workspaceId, String code, String state) {
-        log.info("Handling Instagram OAuth callback for workspace {}", workspaceId);
+        // Polymorphic entry point (legacy): runs discovery + auto-connects every
+        // discovered IG account in one shot. The IG-specific multi-account flow
+        // lives in IntegrationController, which calls
+        // discoverInstagramAccounts + connectChosenAccounts separately so it can
+        // route through a picker page when more than one IG account exists.
+        List<PendingInstagramAccount> discovered = discoverInstagramAccounts(workspaceId, code);
+        if (discovered.isEmpty()) {
+            throw new CustomExceptions.ExternalApiException(
+                "No Instagram Business account linked to this Facebook account. " +
+                "Please link an Instagram Business or Creator account to your Facebook Page.");
+        }
+        connectChosenAccounts(workspaceId, discovered);
+    }
+
+    /**
+     * Exchange the OAuth code for tokens and enumerate every Instagram Business
+     * account the user has access to via their Facebook Pages. Persists nothing.
+     *
+     * Returns an empty list if the user authenticated but has no IG Business
+     * account linked to any of their Pages. The controller decides what to do
+     * with each cardinality (0 → error, 1 → auto-connect, ≥2 → picker).
+     */
+    public List<PendingInstagramAccount> discoverInstagramAccounts(Long workspaceId, String code) {
+        log.info("Discovering Instagram accounts for workspace {}", workspaceId);
 
         if (clientId.isBlank() || clientSecret.isBlank()) {
             throw new CustomExceptions.ExternalApiException("Instagram OAuth credentials not configured");
@@ -318,15 +343,14 @@ public class InstagramService implements SocialMediaService {
             JsonNode pagesNode = objectMapper.readTree(pagesJson);
             JsonNode pages = pagesNode.path("data");
 
-            String igUserId = null;
-            String igUsername = null;
-            String displayName = null;
-            String publishingToken = null; // the Page access token tied to the IG Business account
+            List<PendingInstagramAccount> discovered = new ArrayList<>();
 
-            // 3. For each page, fetch linked Instagram business account
+            // 3. For each page, fetch its linked Instagram business account.
+            // Accumulate every match — the picker decides which to connect.
             for (JsonNode page : pages) {
                 String pageId = page.path("id").asText();
                 String pageToken = page.path("access_token").asText();
+                String pageName = page.path("name").asText("");
                 HttpGet igRequest = new HttpGet(
                     "https://graph.facebook.com/v19.0/" + pageId
                     + "?fields=instagram_business_account"
@@ -334,10 +358,14 @@ public class InstagramService implements SocialMediaService {
                 );
                 String igJson = http.execute(igRequest, r -> EntityUtils.toString(r.getEntity()));
                 JsonNode igNode = objectMapper.readTree(igJson).path("instagram_business_account");
-                if (!igNode.isMissingNode() && igNode.has("id")) {
-                    igUserId = igNode.path("id").asText();
-                    publishingToken = pageToken;
-                    // Fetch username separately
+                if (igNode.isMissingNode() || !igNode.has("id")) {
+                    continue;
+                }
+                String igUserId = igNode.path("id").asText();
+                // Fetch username + display name. Best-effort — fall back to the IG user id.
+                String igUsername = igUserId;
+                String displayName = igUserId;
+                try {
                     HttpGet igProfileRequest = new HttpGet(
                         "https://graph.facebook.com/v19.0/" + igUserId
                         + "?fields=username,name"
@@ -347,49 +375,65 @@ public class InstagramService implements SocialMediaService {
                     JsonNode igProfile = objectMapper.readTree(igProfileJson);
                     igUsername = igProfile.path("username").asText(igUserId);
                     displayName = igProfile.path("name").asText(igUsername);
-                    break;
+                } catch (Exception profileEx) {
+                    log.warn("Failed to fetch IG profile for {}: {}", igUserId, profileEx.getMessage());
                 }
+                discovered.add(new PendingInstagramAccount(
+                    igUserId, igUsername, displayName,
+                    pageId, pageToken, pageName,
+                    null, null
+                ));
             }
 
-            if (igUserId == null) {
-                throw new CustomExceptions.ExternalApiException(
-                    "No Instagram Business account linked to this Facebook account. " +
-                    "Please link an Instagram Business or Creator account to your Facebook Page.");
-            }
-
-            // 3. Save or update SocialAccount
-            Workspace workspace = workspaceRepository.findById(workspaceId)
-                .orElseThrow(() -> new CustomExceptions.ResourceNotFoundException("Workspace", workspaceId));
-
-            Optional<SocialAccount> existing = socialAccountRepository
-                .findByWorkspaceIdAndPlatform(workspaceId, Platform.INSTAGRAM)
-                .stream().findFirst();
-
-            SocialAccount account = existing.orElse(SocialAccount.builder()
-                .workspace(workspace)
-                .platform(Platform.INSTAGRAM)
-                .accountId(igUserId)
-                .build());
-
-            account.setAccountId(igUserId);
-            account.setHandle(igUsername);
-            account.setDisplayName(displayName);
-            // Save the Page access token — that's what graph.facebook.com requires for
-            // IG Business publishing. Page tokens derived from a long-lived user token
-            // do not expire as long as the user token stays valid.
-            account.setAccessToken(publishingToken);
-            account.setConnected(true);
-            account.setTokenExpiresAt(OffsetDateTime.now().plusDays(60));
-            account.setScopes("instagram_basic,instagram_content_publish,pages_read_engagement,pages_show_list");
-
-            socialAccountRepository.save(account);
-            log.info("Instagram Business account @{} connected for workspace {}", igUsername, workspaceId);
+            log.info("Discovered {} Instagram account(s) for workspace {}", discovered.size(), workspaceId);
+            return discovered;
 
         } catch (CustomExceptions.ExternalApiException e) {
             throw e;
         } catch (Exception e) {
-            throw new CustomExceptions.ExternalApiException("Instagram OAuth callback failed: " + e.getMessage(), e);
+            throw new CustomExceptions.ExternalApiException("Instagram OAuth discovery failed: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Persist (or refresh) one SocialAccount row per chosen Instagram account.
+     * Upserts via the unique key (workspace_id, platform, account_id), so
+     * re-running this for an existing IG only refreshes the token + expiry —
+     * never inserts a duplicate.
+     */
+    public List<SocialAccount> connectChosenAccounts(Long workspaceId, List<PendingInstagramAccount> chosen) {
+        if (chosen == null || chosen.isEmpty()) {
+            return List.of();
+        }
+        Workspace workspace = workspaceRepository.findById(workspaceId)
+            .orElseThrow(() -> new CustomExceptions.ResourceNotFoundException("Workspace", workspaceId));
+
+        List<SocialAccount> saved = new ArrayList<>();
+        for (PendingInstagramAccount pending : chosen) {
+            Optional<SocialAccount> existing = socialAccountRepository
+                .findByWorkspaceIdAndPlatformAndAccountId(workspaceId, Platform.INSTAGRAM, pending.igUserId());
+
+            SocialAccount account = existing.orElseGet(() -> SocialAccount.builder()
+                .workspace(workspace)
+                .platform(Platform.INSTAGRAM)
+                .accountId(pending.igUserId())
+                .build());
+
+            account.setAccountId(pending.igUserId());
+            account.setHandle(pending.igUsername());
+            account.setDisplayName(pending.displayName());
+            // Page access token (derived from the long-lived user token) is what
+            // graph.facebook.com requires for IG Business publishing.
+            account.setAccessToken(pending.pageAccessToken());
+            account.setConnected(true);
+            account.setTokenExpiresAt(OffsetDateTime.now().plusDays(60));
+            account.setScopes("instagram_basic,instagram_content_publish,pages_read_engagement,pages_show_list");
+
+            saved.add(socialAccountRepository.save(account));
+            log.info("Instagram account @{} {} for workspace {}",
+                pending.igUsername(), existing.isPresent() ? "refreshed" : "connected", workspaceId);
+        }
+        return saved;
     }
 
     @Override

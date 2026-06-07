@@ -104,6 +104,21 @@ export interface SocialAccount {
   createdAt: string
 }
 
+export interface PendingInstagramAccount {
+  igUserId: string
+  igUsername: string
+  displayName: string
+  pageId: string
+  pageName: string
+  profilePictureUrl?: string | null
+  alreadyConnected?: boolean
+}
+
+export interface PendingInstagramAccountsResponse {
+  accounts: PendingInstagramAccount[]
+  expiresAt: string
+}
+
 export interface Analytics {
   id: number
   postId?: number

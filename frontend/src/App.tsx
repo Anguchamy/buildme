@@ -20,6 +20,7 @@ const PostComposer = lazy(() => import('@/pages/PostComposer'))
 const MediaLibrary = lazy(() => import('@/pages/MediaLibrary'))
 const Analytics = lazy(() => import('@/pages/Analytics'))
 const Integrations = lazy(() => import('@/pages/Integrations'))
+const InstagramAccountPicker = lazy(() => import('@/pages/InstagramAccountPicker'))
 const Settings = lazy(() => import('@/pages/Settings'))
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -84,6 +85,7 @@ export default function App() {
             <Route path="media" element={<MediaLibrary />} />
             <Route path="analytics" element={<Analytics />} />
             <Route path="integrations" element={<Integrations />} />
+            <Route path="integrations/instagram/select" element={<InstagramAccountPicker />} />
             <Route path="settings" element={<Settings />} />
           </Route>
 

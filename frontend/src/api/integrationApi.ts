@@ -1,5 +1,8 @@
 import api from './axios'
-import { SocialAccount } from '@/types'
+import {
+  PendingInstagramAccountsResponse,
+  SocialAccount,
+} from '@/types'
 
 export const integrationApi = {
   getConnectedAccounts: (workspaceId: number) =>
@@ -15,5 +18,27 @@ export const integrationApi = {
   disconnect: (workspaceId: number, platform: string) =>
     api
       .delete(`/integrations/${workspaceId}/${platform.toLowerCase()}/disconnect`)
+      .then((r) => r.data),
+
+  disconnectOne: (workspaceId: number, platform: string, accountId: string) =>
+    api
+      .delete(
+        `/integrations/${workspaceId}/${platform.toLowerCase()}/disconnect/${encodeURIComponent(accountId)}`
+      )
+      .then((r) => r.data),
+
+  getPendingInstagramAccounts: (session: string) =>
+    api
+      .get<PendingInstagramAccountsResponse>(
+        `/integrations/instagram/pending-accounts?session=${encodeURIComponent(session)}`
+      )
+      .then((r) => r.data),
+
+  connectInstagramAccounts: (session: string, igUserIds: string[]) =>
+    api
+      .post<SocialAccount[]>(`/integrations/instagram/connect-accounts`, {
+        session,
+        igUserIds,
+      })
       .then((r) => r.data),
 }
