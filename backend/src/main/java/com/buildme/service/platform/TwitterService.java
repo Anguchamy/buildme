@@ -197,6 +197,11 @@ public class TwitterService implements SocialMediaService {
 
     @Override
     public String getOAuthUrl(Long workspaceId, String state) {
+        return getOAuthUrl(workspaceId, state, false);
+    }
+
+    @Override
+    public String getOAuthUrl(Long workspaceId, String state, boolean forceReauth) {
         String codeVerifier = generateCodeVerifier();
         String codeChallenge = generateCodeChallenge(codeVerifier);
         String stateKey = state + ":" + workspaceId;
@@ -210,7 +215,8 @@ public class TwitterService implements SocialMediaService {
             + "&scope=tweet.read+tweet.write+users.read+offline.access"
             + "&state=" + URLEncoder.encode(stateKey, StandardCharsets.UTF_8)
             + "&code_challenge=" + codeChallenge
-            + "&code_challenge_method=S256";
+            + "&code_challenge_method=S256"
+            + (forceReauth ? "&force_login=true" : "");
     }
 
     @Override

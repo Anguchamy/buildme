@@ -42,8 +42,8 @@ export default function Integrations() {
   })
 
   const connectMutation = useMutation({
-    mutationFn: async (platform: string) => {
-      const { url } = await integrationApi.getOAuthUrl(workspaceId!, platform)
+    mutationFn: async ({ platform, force = false }: { platform: string; force?: boolean }) => {
+      const { url } = await integrationApi.getOAuthUrl(workspaceId!, platform, force)
       window.location.href = url
     },
   })
@@ -208,24 +208,22 @@ export default function Integrations() {
                       </Button>
                     </div>
                   ))}
-                  {platform === Platform.INSTAGRAM && (
-                    <Button
-                      size="xs"
-                      variant="ghost"
-                      className="w-full justify-center"
-                      onClick={() => connectMutation.mutate(platform)}
-                      loading={connectMutation.isPending}
-                    >
-                      + Add another Instagram account
-                    </Button>
-                  )}
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    className="w-full justify-center"
+                    onClick={() => connectMutation.mutate({ platform, force: true })}
+                    loading={connectMutation.isPending}
+                  >
+                    + Add another {platformName} account
+                  </Button>
                 </div>
               ) : (
                 <Button
                   size="sm"
                   variant="secondary"
                   className="w-full justify-center"
-                  onClick={() => connectMutation.mutate(platform)}
+                  onClick={() => connectMutation.mutate({ platform })}
                   loading={connectMutation.isPending}
                   leftIcon={
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

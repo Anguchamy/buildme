@@ -83,6 +83,7 @@ public class IntegrationController {
     public ResponseEntity<Map<String, String>> getOAuthUrl(
         @PathVariable Long workspaceId,
         @PathVariable String platform,
+        @RequestParam(name = "force", defaultValue = "false") boolean force,
         @AuthenticationPrincipal User user
     ) {
         Platform p = Platform.valueOf(platform.toUpperCase());
@@ -95,7 +96,7 @@ public class IntegrationController {
             return ResponseEntity.badRequest().build();
         }
 
-        String url = service.getOAuthUrl(workspaceId, state);
+        String url = service.getOAuthUrl(workspaceId, state, force);
         return ResponseEntity.ok(Map.of("url", url, "state", state));
     }
 

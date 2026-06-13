@@ -8,10 +8,11 @@ export const integrationApi = {
   getConnectedAccounts: (workspaceId: number) =>
     api.get<SocialAccount[]>(`/integrations/${workspaceId}/accounts`).then((r) => r.data),
 
-  getOAuthUrl: (workspaceId: number, platform: string) =>
+  getOAuthUrl: (workspaceId: number, platform: string, force = false) =>
     api
       .get<{ url: string; state: string }>(
-        `/integrations/${workspaceId}/${platform.toLowerCase()}/oauth-url`
+        `/integrations/${workspaceId}/${platform.toLowerCase()}/oauth-url`,
+        { params: force ? { force: true } : {} }
       )
       .then((r) => r.data),
 

@@ -192,10 +192,9 @@ public class ThreadsService implements SocialMediaService {
                 .orElseThrow(() -> new CustomExceptions.ExternalApiException("Workspace not found"));
 
             Optional<SocialAccount> existing = socialAccountRepository
-                .findByWorkspaceIdAndPlatform(workspaceId, Platform.THREADS)
-                .stream().findFirst();
+                .findByWorkspaceIdAndPlatformAndAccountId(workspaceId, Platform.THREADS, userId);
 
-            SocialAccount account = existing.orElse(SocialAccount.builder()
+            SocialAccount account = existing.orElseGet(() -> SocialAccount.builder()
                 .workspace(workspace)
                 .platform(Platform.THREADS)
                 .accountId(userId)

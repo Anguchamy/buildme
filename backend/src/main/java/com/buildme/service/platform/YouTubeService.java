@@ -161,6 +161,17 @@ public class YouTubeService implements SocialMediaService {
 
     @Override
     public String getOAuthUrl(Long workspaceId, String state) {
+        return getOAuthUrl(workspaceId, state, false);
+    }
+
+    @Override
+    public String getOAuthUrl(Long workspaceId, String state, boolean forceReauth) {
+        // Google accepts space-separated values for prompt. select_account makes
+        // the account chooser appear even when the user is already signed in to
+        // a Google account in this browser — required for connecting a second
+        // YouTube/Google identity. We keep "consent" to ensure refresh_token is
+        // re-issued when needed.
+        String prompt = forceReauth ? "select_account+consent" : "consent";
         return "https://accounts.google.com/o/oauth2/v2/auth"
             + "?client_id=" + clientId
             + "&redirect_uri=" + redirectUri
@@ -169,7 +180,7 @@ public class YouTubeService implements SocialMediaService {
             + "+https://www.googleapis.com/auth/userinfo.email"
             + "&response_type=code"
             + "&access_type=offline"
-            + "&prompt=consent"
+            + "&prompt=" + prompt
             + "&state=" + state + ":" + workspaceId;
     }
 

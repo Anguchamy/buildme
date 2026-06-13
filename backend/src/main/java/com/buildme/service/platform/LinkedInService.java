@@ -105,11 +105,17 @@ public class LinkedInService implements SocialMediaService {
 
     @Override
     public String getOAuthUrl(Long workspaceId, String state) {
+        return getOAuthUrl(workspaceId, state, false);
+    }
+
+    @Override
+    public String getOAuthUrl(Long workspaceId, String state, boolean forceReauth) {
         return "https://www.linkedin.com/oauth/v2/authorization"
             + "?response_type=code"
             + "&client_id=" + clientId
             + "&redirect_uri=" + redirectUri
             + "&scope=openid+profile+email+w_member_social"
+            + (forceReauth ? "&prompt=login" : "")
             + "&state=" + state + ":" + workspaceId;
     }
 

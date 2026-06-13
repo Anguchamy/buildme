@@ -146,12 +146,18 @@ public class FacebookService implements SocialMediaService {
 
     @Override
     public String getOAuthUrl(Long workspaceId, String state) {
+        return getOAuthUrl(workspaceId, state, false);
+    }
+
+    @Override
+    public String getOAuthUrl(Long workspaceId, String state, boolean forceReauth) {
         String stateKey = state + ":" + workspaceId;
         return "https://www.facebook.com/v19.0/dialog/oauth"
             + "?client_id=" + appId
             + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
             + "&scope=pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_engagement,business_management"
             + "&response_type=code"
+            + (forceReauth ? "&auth_type=reauthenticate" : "")
             + "&state=" + URLEncoder.encode(stateKey, StandardCharsets.UTF_8);
     }
 
@@ -184,14 +190,14 @@ public class FacebookService implements SocialMediaService {
 
             String accessToken = tokenNode.path("access_token").asText();
 
-            // 2. Fetch user profile
+            // 2. Fetch user profile (used as a fallback when the user manages no Pages)
             HttpGet profileRequest = new HttpGet(
                 "https://graph.facebook.com/v19.0/me?fields=id,name&access_token=" + accessToken
             );
             String profileJson = http.execute(profileRequest, r -> EntityUtils.toString(r.getEntity()));
             JsonNode profile = objectMapper.readTree(profileJson);
             String userId = profile.path("id").asText();
-            String displayName = profile.path("name").asText(userId);
+            String userDisplayName = profile.path("name").asText(userId);
 
             // 3. Fetch Facebook Pages managed by user
             HttpGet pagesRequest = new HttpGet(
@@ -201,48 +207,58 @@ public class FacebookService implements SocialMediaService {
             JsonNode pagesNode = objectMapper.readTree(pagesJson);
             JsonNode pages = pagesNode.path("data");
 
-            // Use first page if available, otherwise use user account
-            String accountId = userId;
-            String handle = displayName;
-            String pageToken = accessToken;
-
-            if (pages.isArray() && pages.size() > 0) {
-                JsonNode firstPage = pages.get(0);
-                accountId = firstPage.path("id").asText(userId);
-                handle = firstPage.path("name").asText(displayName);
-                pageToken = firstPage.path("access_token").asText(accessToken);
-            }
-
-            // 4. Save or update SocialAccount
             Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new CustomExceptions.ExternalApiException("Workspace not found"));
 
-            Optional<SocialAccount> existing = socialAccountRepository
-                .findByWorkspaceIdAndPlatform(workspaceId, Platform.FACEBOOK)
-                .stream().findFirst();
-
-            SocialAccount account = existing.orElse(SocialAccount.builder()
-                .workspace(workspace)
-                .platform(Platform.FACEBOOK)
-                .accountId(accountId)
-                .build());
-
-            account.setAccountId(accountId);
-            account.setHandle(handle);
-            account.setDisplayName(displayName);
-            account.setAccessToken(pageToken);
-            account.setConnected(true);
-            account.setTokenExpiresAt(OffsetDateTime.now().plusDays(60));
-            account.setScopes("pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_engagement,business_management");
-
-            socialAccountRepository.save(account);
-            log.info("Facebook account '{}' connected for workspace {}", handle, workspaceId);
+            // 4. Upsert one SocialAccount per Page. Keying on (workspace, platform,
+            // account_id) means a second OAuth as a different user adds new rows
+            // for their Pages instead of overwriting whatever's already connected.
+            int connectedCount = 0;
+            if (pages.isArray() && pages.size() > 0) {
+                for (JsonNode page : pages) {
+                    String pageId = page.path("id").asText();
+                    if (pageId.isBlank()) continue;
+                    String pageName = page.path("name").asText(pageId);
+                    String pageToken = page.path("access_token").asText(accessToken);
+                    upsertFacebookAccount(workspace, pageId, pageName, pageName, pageToken);
+                    connectedCount++;
+                }
+            }
+            if (connectedCount == 0) {
+                upsertFacebookAccount(workspace, userId, userDisplayName, userDisplayName, accessToken);
+                connectedCount = 1;
+            }
+            log.info("Facebook: connected {} account(s) for workspace {}", connectedCount, workspaceId);
 
         } catch (CustomExceptions.ExternalApiException e) {
             throw e;
         } catch (Exception e) {
             throw new CustomExceptions.ExternalApiException("Facebook OAuth callback failed: " + e.getMessage());
         }
+    }
+
+    private void upsertFacebookAccount(Workspace workspace, String accountId,
+                                       String handle, String displayName, String accessToken) {
+        Optional<SocialAccount> existing = socialAccountRepository
+            .findByWorkspaceIdAndPlatformAndAccountId(workspace.getId(), Platform.FACEBOOK, accountId);
+
+        SocialAccount account = existing.orElseGet(() -> SocialAccount.builder()
+            .workspace(workspace)
+            .platform(Platform.FACEBOOK)
+            .accountId(accountId)
+            .build());
+
+        account.setAccountId(accountId);
+        account.setHandle(handle);
+        account.setDisplayName(displayName);
+        account.setAccessToken(accessToken);
+        account.setConnected(true);
+        account.setTokenExpiresAt(OffsetDateTime.now().plusDays(60));
+        account.setScopes("pages_show_list,pages_read_engagement,pages_manage_posts,pages_manage_engagement,business_management");
+
+        socialAccountRepository.save(account);
+        log.info("Facebook account '{}' {} for workspace {}",
+            handle, existing.isPresent() ? "refreshed" : "connected", workspace.getId());
     }
 
     @Override

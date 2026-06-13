@@ -258,13 +258,22 @@ public class InstagramService implements SocialMediaService {
 
     @Override
     public String getOAuthUrl(Long workspaceId, String state) {
-        // Instagram Graph API now uses Facebook OAuth login
+        return getOAuthUrl(workspaceId, state, false);
+    }
+
+    @Override
+    public String getOAuthUrl(Long workspaceId, String state, boolean forceReauth) {
+        // Instagram Graph API uses Facebook OAuth login. auth_type=reauthenticate
+        // makes Facebook ignore the existing session and force the user back
+        // through credentials so they can switch FB identities (and therefore
+        // see a different set of IG Business accounts in the picker).
         String stateKey = state + ":" + workspaceId;
         return "https://www.facebook.com/v19.0/dialog/oauth"
             + "?client_id=" + clientId
             + "&redirect_uri=" + URLEncoder.encode(redirectUri, StandardCharsets.UTF_8)
             + "&scope=instagram_basic,instagram_content_publish,pages_read_engagement,pages_show_list,business_management"
             + "&response_type=code"
+            + (forceReauth ? "&auth_type=reauthenticate" : "")
             + "&state=" + URLEncoder.encode(stateKey, StandardCharsets.UTF_8);
     }
 
