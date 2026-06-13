@@ -44,6 +44,7 @@ public class SecurityConfig {
         "/api/integrations/youtube/callback",
         "/api/integrations/tiktok/callback",
         "/api/integrations/pinterest/callback",
+        "/api/integrations/threads/callback",
         "/api/auth/verify-email",
         "/api/auth/resend-verification",
         "/api/razorpay/webhook",
