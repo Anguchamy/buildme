@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { PlanType } from '@/types'
 import { useAuthStore } from '@/store/authStore'
 import { useWorkspaceStore } from '@/store/workspaceStore'
 import { workspaceApi } from '@/api/workspaceApi'
@@ -97,11 +98,27 @@ export default function Settings() {
   })
 
   // ── Subscription ──
-  const { data: subscription, isLoading: subLoading } = useQuery({
+  const { data: subscription, isLoading: subLoading, isError: subError, error: subErrorObj } = useQuery({
     queryKey: ['subscription', currentWorkspaceId],
     queryFn: () => subscriptionApi.getSubscription(currentWorkspaceId!),
     enabled: !!currentWorkspaceId && tab === 'subscription',
+    retry: 1,
   })
+
+  const effectiveSubscription = subscription ?? (
+    !subLoading && currentWorkspaceId
+      ? {
+          id: 0,
+          workspaceId: currentWorkspaceId,
+          planType: PlanType.FREE,
+          status: 'ACTIVE',
+          cancelAtPeriodEnd: false,
+          seats: 1,
+          monthlyPostLimit: FREE_LIMIT,
+          postsUsedThisMonth: 0,
+        }
+      : undefined
+  )
 
   const [upgradingPlan, setUpgradingPlan] = useState<string | null>(null)
 
@@ -178,8 +195,8 @@ export default function Settings() {
     { key: 'notifications', label: '🔔 Notifications' },
   ]
 
-  const postsUsed = subscription?.postsUsedThisMonth ?? 0
-  const postLimit = subscription?.monthlyPostLimit ?? FREE_LIMIT
+  const postsUsed = effectiveSubscription?.postsUsedThisMonth ?? 0
+  const postLimit = effectiveSubscription?.monthlyPostLimit ?? FREE_LIMIT
   const usedPct   = Math.min(100, (postsUsed / postLimit) * 100)
 
   return (
@@ -190,12 +207,12 @@ export default function Settings() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 bg-light-2 dark:bg-surface-2 rounded-xl p-1">
+      <div className="grid grid-cols-4 gap-1 bg-light-2 dark:bg-surface-2 rounded-xl p-1">
         {tabs.map((t) => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
-            className={`flex-1 px-3 py-2 text-sm rounded-lg transition-colors font-medium ${
+            className={`min-w-0 px-3 py-2 text-sm rounded-lg transition-colors font-medium whitespace-nowrap ${
               tab === t.key
                 ? 'bg-white dark:bg-surface-4 text-gray-900 dark:text-white shadow-sm'
                 : 'text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
@@ -290,32 +307,32 @@ export default function Settings() {
                 <div className="h-4 bg-light-2 dark:bg-surface-3 rounded animate-pulse w-1/3" />
                 <div className="h-3 bg-light-2 dark:bg-surface-3 rounded animate-pulse w-1/2" />
               </div>
-            ) : subscription ? (
+            ) : effectiveSubscription ? (
               <>
                 <div className="flex items-center justify-between p-4 bg-light-2 dark:bg-surface-3 rounded-xl">
                   <div className="flex items-center gap-3">
                     <span className="text-2xl">
-                      {subscription.planType === 'FREE' ? '🆓' : subscription.planType === 'PRO' ? '⭐' : '🏢'}
+                      {effectiveSubscription.planType === 'FREE' ? '🆓' : effectiveSubscription.planType === 'PRO' ? '⭐' : '🏢'}
                     </span>
                     <div>
                       <p className="font-semibold text-gray-900 dark:text-white">
-                        {subscription.planType.charAt(0) + subscription.planType.slice(1).toLowerCase()} Plan
+                        {effectiveSubscription.planType.charAt(0) + effectiveSubscription.planType.slice(1).toLowerCase()} Plan
                       </p>
                       <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-                        {subscription.planType === 'FREE'
+                        {effectiveSubscription.planType === 'FREE'
                           ? `${postsUsed} of ${postLimit} posts used this month`
-                          : `Renews ${subscription.currentPeriodEnd ? new Date(subscription.currentPeriodEnd).toLocaleDateString('en-IN') : '—'}`}
+                          : `Renews ${effectiveSubscription.currentPeriodEnd ? new Date(effectiveSubscription.currentPeriodEnd).toLocaleDateString('en-IN') : '—'}`}
                       </p>
                     </div>
                   </div>
                   <span className={`text-xs px-2.5 py-1 rounded-full font-medium ${
-                    subscription.status === 'ACTIVE'  ? 'bg-green-50 text-green-600 dark:bg-green-500/20 dark:text-green-400' :
-                    subscription.status === 'PENDING' ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400' :
-                                                        'bg-red-50 text-red-600 dark:bg-red-500/20 dark:text-red-400'
-                  }`}>{subscription.status}</span>
+                    effectiveSubscription.status === 'ACTIVE'  ? 'bg-green-50 text-green-600 dark:bg-green-500/20 dark:text-green-400' :
+                    effectiveSubscription.status === 'PENDING' ? 'bg-amber-50 text-amber-600 dark:bg-amber-500/20 dark:text-amber-400' :
+                                                                  'bg-red-50 text-red-600 dark:bg-red-500/20 dark:text-red-400'
+                  }`}>{effectiveSubscription.status}</span>
                 </div>
 
-                {subscription.planType === 'FREE' && (
+                {effectiveSubscription.planType === 'FREE' && (
                   <div>
                     <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
                       <span>Posts this month</span>
@@ -331,13 +348,19 @@ export default function Settings() {
                   </div>
                 )}
 
-                {subscription.planType !== 'FREE' && !subscription.cancelAtPeriodEnd && (
+                {effectiveSubscription.planType !== 'FREE' && !effectiveSubscription.cancelAtPeriodEnd && (
                   <Button variant="secondary" size="sm" onClick={() => cancelMutation.mutate()} loading={cancelMutation.isPending}>
                     Cancel at period end
                   </Button>
                 )}
-                {subscription.cancelAtPeriodEnd && (
+                {effectiveSubscription.cancelAtPeriodEnd && (
                   <p className="text-xs text-amber-500 dark:text-amber-400">⚠ Plan cancels at end of billing period.</p>
+                )}
+
+                {subError && !subscription && (
+                  <p className="text-xs text-amber-500 dark:text-amber-400">
+                    Couldn't reach the subscription service — showing default Free plan. {subErrorObj instanceof Error ? `(${subErrorObj.message})` : ''}
+                  </p>
                 )}
               </>
             ) : (
@@ -345,7 +368,7 @@ export default function Settings() {
             )}
           </div>
 
-          {(!subscription || subscription.planType === 'FREE') && (
+          {(!effectiveSubscription || effectiveSubscription.planType === 'FREE') && (
             <div className="grid grid-cols-2 gap-4">
               <div className="card border-brand-500/40 hover:border-brand-500 transition-colors">
                 <div className="flex items-center justify-between mb-2">
