@@ -156,15 +156,25 @@ public class ThreadsService implements SocialMediaService {
             );
             tokenRequest.setEntity(new UrlEncodedFormEntity(params));
             String tokenJson = http.execute(tokenRequest, r -> EntityUtils.toString(r.getEntity()));
+            log.debug("Threads token exchange response: {}", tokenJson);
             JsonNode tokenNode = objectMapper.readTree(tokenJson);
 
-            if (tokenNode.has("error")) {
-                throw new CustomExceptions.ExternalApiException(
-                    "Threads token exchange failed: " + tokenNode.path("error_message").asText("unknown error"));
+            if (tokenNode.has("error") || tokenNode.has("error_type") || tokenNode.has("error_message")) {
+                String msg = tokenNode.path("error_message").asText(
+                    tokenNode.path("error").path("message").asText(
+                        tokenNode.path("error").asText(tokenJson)));
+                log.error("Threads token exchange failed. Response: {}", tokenJson);
+                throw new CustomExceptions.ExternalApiException("Threads token exchange failed: " + msg);
             }
 
             String shortToken = tokenNode.path("access_token").asText();
             String userId = tokenNode.path("user_id").asText();
+
+            if (shortToken.isBlank()) {
+                log.error("Threads token exchange returned no access_token. Response: {}", tokenJson);
+                throw new CustomExceptions.ExternalApiException(
+                    "Threads token exchange failed: no access_token in response — " + tokenJson);
+            }
 
             // 2. Exchange for long-lived token (60 days)
             HttpGet longTokenRequest = new HttpGet(
