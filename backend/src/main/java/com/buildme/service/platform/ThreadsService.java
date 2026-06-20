@@ -155,8 +155,10 @@ public class ThreadsService implements SocialMediaService {
                 new BasicNameValuePair("code", code)
             );
             tokenRequest.setEntity(new UrlEncodedFormEntity(params));
+            log.info("Threads token exchange request: client_id={}, redirect_uri={}, code={}",
+                clientId, redirectUri, code);
             String tokenJson = http.execute(tokenRequest, r -> EntityUtils.toString(r.getEntity()));
-            log.debug("Threads token exchange response: {}", tokenJson);
+            log.info("Threads token exchange raw response: {}", tokenJson);
             JsonNode tokenNode = objectMapper.readTree(tokenJson);
 
             if (tokenNode.has("error") || tokenNode.has("error_type") || tokenNode.has("error_message")) {
