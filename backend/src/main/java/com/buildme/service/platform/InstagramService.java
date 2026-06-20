@@ -8,8 +8,7 @@ import com.buildme.model.SocialAccount;
 import com.buildme.model.Workspace;
 import com.buildme.repository.SocialAccountRepository;
 import com.buildme.repository.WorkspaceRepository;
-import com.buildme.service.R2StorageService;
-import com.buildme.util.MediaTokenUtil;
+import com.buildme.service.PublicMediaUrlResolver;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -40,17 +39,7 @@ public class InstagramService implements SocialMediaService {
     private final SocialAccountRepository socialAccountRepository;
     private final WorkspaceRepository workspaceRepository;
     private final ObjectMapper objectMapper;
-    private final R2StorageService r2StorageService;
-    private final MediaTokenUtil mediaTokenUtil;
-
-    @Value("${app.backend.url:}")
-    private String backendUrl;
-
-    @jakarta.annotation.PostConstruct
-    public void logConfig() {
-        log.info("InstagramService initialized — app.backend.url={}",
-            (backendUrl == null || backendUrl.isBlank()) ? "(unset, will fall back to R2 URL)" : backendUrl);
-    }
+    private final PublicMediaUrlResolver publicMediaUrlResolver;
 
     @Value("${app.oauth.instagram.client-id:}")
     private String clientId;
@@ -105,7 +94,7 @@ public class InstagramService implements SocialMediaService {
             // The stored MediaAsset.url is the private R2 endpoint; if R2 is enabled
             // we must hand IG either the public CDN URL or a presigned GET URL with
             // a long expiry (IG retries ingestion for hours, especially for video).
-            String mediaUrl = resolvePublicMediaUrl(first);
+            String mediaUrl = publicMediaUrlResolver.resolve(first);
             if (mediaUrl == null || mediaUrl.isBlank()) {
                 throw new CustomExceptions.ExternalApiException(
                     "Media asset has no URL — cannot publish to Instagram.");
@@ -198,39 +187,6 @@ public class InstagramService implements SocialMediaService {
             log.info("Published to Instagram account {} — post id {}", account.getHandle(), postId);
             return postId;
         }
-    }
-
-    private String resolvePublicMediaUrl(com.buildme.model.MediaAsset asset) {
-        // Preferred: route IG through our own backend's public media endpoint.
-        // We control the Content-Type and bytes end-to-end, avoiding R2
-        // presigned-URL quirks that kept making IG reject with "Only photo or
-        // video can be accepted as media type". Requires app.backend.url to
-        // be set to the externally-reachable base URL (e.g. Render URL).
-        if (backendUrl != null && !backendUrl.isBlank()) {
-            String base = backendUrl.replaceAll("/+$", "");
-            if (!base.startsWith("http://") && !base.startsWith("https://")) {
-                // Defensive: if someone set APP_BACKEND_URL without a scheme
-                // we'd otherwise build a path-only "host.com/api/..." which
-                // Apache HttpClient and IG both fail to fetch.
-                base = "https://" + base;
-            }
-            String token = mediaTokenUtil.issue(asset.getId(), 86_400);
-            return base + "/api/public/media/" + asset.getId() + "?t=" + token;
-        }
-        // Fallback: directly hand R2 to IG. Works only if R2 is configured
-        // with a public-url, or if R2's response-content-type override happens
-        // to play nicely (often it doesn't, hence the dedicated endpoint above).
-        if (r2StorageService.isEnabled() && asset.getS3Key() != null && !asset.getS3Key().isBlank()) {
-            if (r2StorageService.hasPublicUrl()) {
-                return r2StorageService.resolvePublicUrl(asset.getS3Key());
-            }
-            String contentType = asset.getContentType();
-            if (contentType == null || contentType.isBlank()) {
-                contentType = "image/jpeg";
-            }
-            return r2StorageService.generatePresignedGetUrl(asset.getS3Key(), 86_400, contentType);
-        }
-        return asset.getUrl();
     }
 
     private void waitForContainerReady(CloseableHttpClient http, String containerId, String accessToken) throws Exception {

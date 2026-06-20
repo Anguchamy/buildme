@@ -7,6 +7,7 @@ import com.buildme.model.SocialAccount;
 import com.buildme.model.Workspace;
 import com.buildme.repository.SocialAccountRepository;
 import com.buildme.repository.WorkspaceRepository;
+import com.buildme.service.PublicMediaUrlResolver;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ public class ThreadsService implements SocialMediaService {
     private final SocialAccountRepository socialAccountRepository;
     private final WorkspaceRepository workspaceRepository;
     private final ObjectMapper objectMapper;
+    private final PublicMediaUrlResolver publicMediaUrlResolver;
 
     @Value("${app.oauth.threads.client-id:}")
     private String clientId;
@@ -46,10 +48,12 @@ public class ThreadsService implements SocialMediaService {
 
     public ThreadsService(SocialAccountRepository socialAccountRepository,
                           WorkspaceRepository workspaceRepository,
-                          ObjectMapper objectMapper) {
+                          ObjectMapper objectMapper,
+                          PublicMediaUrlResolver publicMediaUrlResolver) {
         this.socialAccountRepository = socialAccountRepository;
         this.workspaceRepository = workspaceRepository;
         this.objectMapper = objectMapper;
+        this.publicMediaUrlResolver = publicMediaUrlResolver;
     }
 
     @Override
@@ -80,7 +84,8 @@ public class ThreadsService implements SocialMediaService {
 
             if (assets != null && !assets.isEmpty()) {
                 com.buildme.model.MediaAsset first = assets.get(0);
-                String mediaUrl = first.getUrl();
+                String mediaUrl = publicMediaUrlResolver.resolve(first);
+                log.info("Threads media URL resolved for asset {}: {}", first.getId(), mediaUrl);
                 if (first.getContentType() != null && first.getContentType().startsWith("video/")) {
                     containerParams.add(new BasicNameValuePair("media_type", "VIDEO"));
                     containerParams.add(new BasicNameValuePair("video_url", mediaUrl));
