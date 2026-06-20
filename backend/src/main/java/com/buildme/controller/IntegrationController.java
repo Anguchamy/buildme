@@ -41,6 +41,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -61,6 +63,13 @@ public class IntegrationController {
     /** TTL for the IG picker session token. 10 minutes — long enough to read
      *  the list, short enough to limit replay if the URL leaks. */
     private static final long IG_SESSION_TTL_SECONDS = 600;
+
+    // Browsers (and React StrictMode in dev) sometimes fire the OAuth callback
+    // twice with the same single-use code. Meta returns "Invalid parameter"
+    // on the second exchange and we'd surface a 502 to the user even though
+    // the first call succeeded. Track in-flight codes to dedupe.
+    private final ConcurrentMap<String, Long> recentCallbackCodes = new ConcurrentHashMap<>();
+    private static final long CALLBACK_DEDUPE_WINDOW_MS = 60_000;
 
     @Value("${app.frontend.url:http://localhost:3000}")
     private String frontendUrl;
@@ -124,6 +133,15 @@ public class IntegrationController {
         }
 
         Platform p = Platform.valueOf(platform.toUpperCase());
+
+        String dedupeKey = platform.toLowerCase() + ":" + code;
+        long now = System.currentTimeMillis();
+        recentCallbackCodes.entrySet().removeIf(e -> now - e.getValue() > CALLBACK_DEDUPE_WINDOW_MS);
+        if (recentCallbackCodes.putIfAbsent(dedupeKey, now) != null) {
+            log.info("Duplicate {} OAuth callback for code {}…; redirecting without re-exchanging",
+                platform, code.substring(0, Math.min(8, code.length())));
+            return redirect(redirectBase + "?connected=" + platform.toLowerCase());
+        }
 
         // Instagram has the multi-account flow: discover all linked IG Business
         // accounts, then route the user through a picker (skipping the picker
