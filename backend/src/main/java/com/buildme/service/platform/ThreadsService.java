@@ -93,12 +93,23 @@ public class ThreadsService implements SocialMediaService {
             }
 
             containerRequest.setEntity(new UrlEncodedFormEntity(containerParams));
+            log.info("Threads container request: userId={}, media_type={}, hasMedia={}",
+                userId,
+                containerParams.stream()
+                    .filter(p -> "media_type".equals(p.getName()))
+                    .map(NameValuePair::getValue).findFirst().orElse("?"),
+                assets != null && !assets.isEmpty());
             String containerJson = http.execute(containerRequest, r -> EntityUtils.toString(r.getEntity()));
+            log.info("Threads container raw response: {}", containerJson);
             JsonNode containerNode = objectMapper.readTree(containerJson);
 
             if (containerNode.has("error")) {
+                JsonNode err = containerNode.path("error");
+                String msg = err.path("error_user_msg").asText(
+                    err.path("message").asText("unknown error"));
+                log.error("Threads container creation failed. Response: {}", containerJson);
                 throw new CustomExceptions.ExternalApiException(
-                    "Threads container creation failed: " + containerNode.path("error").path("message").asText());
+                    "Threads container creation failed: " + msg);
             }
 
             String containerId = containerNode.path("id").asText();
@@ -113,7 +124,17 @@ public class ThreadsService implements SocialMediaService {
             );
             publishRequest.setEntity(new UrlEncodedFormEntity(publishParams));
             String publishJson = http.execute(publishRequest, r -> EntityUtils.toString(r.getEntity()));
+            log.info("Threads publish raw response: {}", publishJson);
             JsonNode publishNode = objectMapper.readTree(publishJson);
+
+            if (publishNode.has("error")) {
+                JsonNode err = publishNode.path("error");
+                String msg = err.path("error_user_msg").asText(
+                    err.path("message").asText("unknown error"));
+                log.error("Threads publish failed. Response: {}", publishJson);
+                throw new CustomExceptions.ExternalApiException(
+                    "Threads publish failed: " + msg);
+            }
 
             String threadId = publishNode.path("id").asText();
             log.info("Published Threads post {} for post {}", threadId, scheduledPost.getId());
