@@ -18,8 +18,8 @@ function SectionCard({ children, accentColor = '#1C1AFF' }: { children: React.Re
     <div style={{
       borderRadius: 16, padding: '18px 20px',
       background: 'var(--bg-elev-1)',
-      border: '1px solid rgba(255,255,255,0.06)',
-      boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset, 0 12px 40px rgba(0,0,0,0.5)',
+      border: '1px solid var(--border-2)',
+      boxShadow: '0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.06)',
       position: 'relative', overflow: 'hidden',
     }}>
       {/* Ambient corner glow */}
@@ -195,14 +195,14 @@ export default function Dashboard() {
                     onClick={() => openComposer(post.id)}
                     style={{
                       display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', borderRadius: 10, cursor: 'pointer', transition: 'all 0.2s',
-                      background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
+                      background: 'var(--bg-elev-2)', border: '1px solid var(--border-2)',
                     }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(28,26,255,0.06)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(28,26,255,0.15)' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.02)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.05)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(28,26,255,0.06)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(28,26,255,0.20)' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--bg-elev-2)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'var(--border-2)' }}
                   >
                     <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#1C1AFF', boxShadow: '0 0 6px rgba(28,26,255,0.7)', marginTop: 5, flexShrink: 0 }} />
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <p style={{ fontSize: 11, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: 11, fontWeight: 500, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {post.caption?.slice(0, 50) ?? 'No caption'}
                       </p>
                       <p style={{ fontSize: 10, color: 'var(--text-4)', marginTop: 2 }}>
@@ -230,12 +230,12 @@ export default function Dashboard() {
                   to={a.to}
                   style={{
                     display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 10,
-                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                    background: 'var(--bg-elev-2)', border: '1px solid var(--border-2)',
                     fontSize: 12, fontWeight: 600, color: 'var(--text-2)',
                     textDecoration: 'none', transition: 'all 0.2s',
                   }}
-                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = `${a.color}12`; (e.currentTarget as HTMLAnchorElement).style.borderColor = `${a.color}30`; (e.currentTarget as HTMLAnchorElement).style.color = a.color }}
-                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.03)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'rgba(255,255,255,0.06)'; (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-2)' }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.background = `${a.color}12`; (e.currentTarget as HTMLAnchorElement).style.borderColor = `${a.color}40`; (e.currentTarget as HTMLAnchorElement).style.color = a.color }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.background = 'var(--bg-elev-2)'; (e.currentTarget as HTMLAnchorElement).style.borderColor = 'var(--border-2)'; (e.currentTarget as HTMLAnchorElement).style.color = 'var(--text-2)' }}
                 >
                   <span style={{ fontSize: 14 }}>{a.icon}</span>
                   {a.label}

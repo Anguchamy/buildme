@@ -9,10 +9,10 @@ interface Props {
 }
 
 const accentConfig = {
-  brand:  { from: '#1d4ed8', to: '#1C1AFF', glow: 'rgba(28,26,255,0.35)',   ring: 'rgba(28,26,255,0.2)',   badge: 'rgba(28,26,255,0.12)',  light: '#60a5fa' },
-  green:  { from: '#059669', to: '#34d399', glow: 'rgba(52,211,153,0.35)',  ring: 'rgba(52,211,153,0.2)',  badge: 'rgba(52,211,153,0.12)', light: '#6ee7b7' },
-  blue:   { from: '#0369a1', to: '#0ea5e9', glow: 'rgba(14,165,233,0.35)',  ring: 'rgba(14,165,233,0.2)',  badge: 'rgba(14,165,233,0.12)', light: '#7dd3fc' },
-  orange: { from: '#d97706', to: '#fbbf24', glow: 'rgba(251,191,36,0.35)',  ring: 'rgba(251,191,36,0.2)',  badge: 'rgba(251,191,36,0.12)', light: '#fde68a' },
+  brand:  { from: '#1d4ed8', to: '#1C1AFF', glow: 'rgba(28,26,255,0.35)',   ring: 'rgba(28,26,255,0.2)',   badge: 'rgba(28,26,255,0.12)',  value: '#1C1AFF' },
+  green:  { from: '#059669', to: '#34d399', glow: 'rgba(52,211,153,0.35)',  ring: 'rgba(52,211,153,0.2)',  badge: 'rgba(52,211,153,0.12)', value: '#047857' },
+  blue:   { from: '#0369a1', to: '#0ea5e9', glow: 'rgba(14,165,233,0.35)',  ring: 'rgba(14,165,233,0.2)',  badge: 'rgba(14,165,233,0.12)', value: '#0369a1' },
+  orange: { from: '#d97706', to: '#fbbf24', glow: 'rgba(251,191,36,0.35)',  ring: 'rgba(251,191,36,0.2)',  badge: 'rgba(251,191,36,0.12)', value: '#b45309' },
 }
 
 export default function StatsCard({ label, value, change, icon, accent = 'brand' }: Props) {
@@ -26,26 +26,19 @@ export default function StatsCard({ label, value, change, icon, accent = 'brand'
     const rect = el.getBoundingClientRect()
     const x = (e.clientX - rect.left) / rect.width  - 0.5   // -0.5 → 0.5
     const y = (e.clientY - rect.top)  / rect.height - 0.5
-    el.style.transform = `perspective(600px) rotateY(${x * 12}deg) rotateX(${-y * 12}deg) translateZ(8px)`
+    el.style.transform = `perspective(600px) rotateY(${x * 8}deg) rotateX(${-y * 8}deg) translateZ(4px)`
     el.style.boxShadow = `
-      ${x * -20}px ${y * -20}px 60px ${cfg.glow},
-      0 28px 80px rgba(0,0,0,0.6),
-      0 0 0 1px ${cfg.ring},
-      inset 0 1px 0 rgba(255,255,255,0.07)
+      ${x * -12}px ${y * -12}px 32px ${cfg.glow.replace('0.35','0.18')},
+      0 12px 28px rgba(15,23,42,0.10),
+      0 0 0 1px ${cfg.ring}
     `
   }
-  const handleMouseLeave = (e: React.MouseEvent<HTMLDivElement>) => {
+  const handleMouseLeave = () => {
     const el = cardRef.current
     if (!el) return
     el.style.transform = ''
-    el.style.boxShadow = `
-      0 1px 0 rgba(255,255,255,0.05) inset,
-      0 16px 48px rgba(0,0,0,0.5),
-      0 0 0 1px rgba(255,255,255,0.04)
-    `
+    el.style.boxShadow = ''
   }
-
-  const isDark = document.documentElement.classList.contains('dark')
 
   return (
     <div
@@ -60,20 +53,11 @@ export default function StatsCard({ label, value, change, icon, accent = 'brand'
         cursor: 'default',
         transition: 'transform 0.12s ease, box-shadow 0.12s ease',
         background: 'var(--bg-elev-1)',
-        border: '1px solid rgba(255,255,255,0.06)',
-        boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset, 0 16px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03)',
+        border: '1px solid var(--border-2)',
+        boxShadow: '0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.06)',
         transformStyle: 'preserve-3d',
       }}
     >
-      {/* Light mode override */}
-      <style>{`
-        html:not(.dark) .sc-wrap-${accent} {
-          background: #ffffff !important;
-          border-color: rgba(0,0,0,0.07) !important;
-          box-shadow: 0 1px 0 rgba(255,255,255,0.9) inset, 0 4px 20px rgba(0,0,0,0.07) !important;
-        }
-      `}</style>
-      <div className={`sc-wrap-${accent}`} style={{ position: 'absolute', inset: 0, borderRadius: 'inherit' }} />
 
       {/* Ambient glow blob */}
       <div style={{
@@ -129,14 +113,11 @@ export default function StatsCard({ label, value, change, icon, accent = 'brand'
           letterSpacing: '-0.03em',
           lineHeight: 1,
           marginBottom: '0.25rem',
-          background: `linear-gradient(135deg, #fff 0%, ${cfg.light} 100%)`,
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
+          color: cfg.value,
         }}>
           {value}
         </p>
-        <p style={{ fontSize: '0.72rem', fontWeight: 500, color: 'var(--text-2)', letterSpacing: '0.02em' }}>
+        <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-3)', letterSpacing: '0.02em' }}>
           {label}
         </p>
       </div>

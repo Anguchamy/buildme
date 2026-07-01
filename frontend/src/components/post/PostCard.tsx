@@ -18,7 +18,7 @@ export default function PostCard({ post, onClick }: Props) {
   return (
     <div
       onClick={onClick}
-      className="card cursor-pointer hover:border-white/20 transition-all duration-200 group"
+      className="card cursor-pointer transition-all duration-200 group"
     >
       {firstAsset && (
         <div className="aspect-square rounded-lg overflow-hidden mb-3 bg-surface-3">
@@ -36,13 +36,13 @@ export default function PostCard({ post, onClick }: Props) {
       </div>
 
       {post.caption && (
-        <p className="text-sm text-gray-300 line-clamp-2 mb-2">
+        <p className="text-sm text-slate-700 dark:text-slate-200 line-clamp-2 mb-2">
           {truncate(post.caption, 100)}
         </p>
       )}
 
       {post.scheduledAt && (
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           🕐 {formatDate(post.scheduledAt, 'MMM d, h:mm a')}
         </p>
       )}
