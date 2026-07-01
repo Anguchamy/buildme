@@ -9,9 +9,9 @@ interface Props {
 }
 
 const accentConfig = {
-  brand:  { from: '#9333ea', to: '#a855f7', glow: 'rgba(168,85,247,0.35)',  ring: 'rgba(168,85,247,0.2)',  badge: 'rgba(168,85,247,0.12)', light: '#c084fc' },
+  brand:  { from: '#1d4ed8', to: '#1C1AFF', glow: 'rgba(28,26,255,0.35)',   ring: 'rgba(28,26,255,0.2)',   badge: 'rgba(28,26,255,0.12)',  light: '#60a5fa' },
   green:  { from: '#059669', to: '#34d399', glow: 'rgba(52,211,153,0.35)',  ring: 'rgba(52,211,153,0.2)',  badge: 'rgba(52,211,153,0.12)', light: '#6ee7b7' },
-  blue:   { from: '#0891b2', to: '#22d3ee', glow: 'rgba(34,211,238,0.35)',  ring: 'rgba(34,211,238,0.2)',  badge: 'rgba(34,211,238,0.12)', light: '#67e8f9' },
+  blue:   { from: '#0369a1', to: '#0ea5e9', glow: 'rgba(14,165,233,0.35)',  ring: 'rgba(14,165,233,0.2)',  badge: 'rgba(14,165,233,0.12)', light: '#7dd3fc' },
   orange: { from: '#d97706', to: '#fbbf24', glow: 'rgba(251,191,36,0.35)',  ring: 'rgba(251,191,36,0.2)',  badge: 'rgba(251,191,36,0.12)', light: '#fde68a' },
 }
 

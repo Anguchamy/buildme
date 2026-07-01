@@ -42,14 +42,13 @@ export default function Register() {
       background: 'var(--bg-app)', position: 'relative', overflow: 'hidden', padding: 24,
     }}>
       {/* Ambient orbs */}
-      <Orb style={{ width: 600, height: 600, top: '-20%', right: '10%', background: 'radial-gradient(circle, rgba(147,51,234,0.18) 0%, transparent 70%)' }} />
-      <Orb style={{ width: 500, height: 500, bottom: '-15%', left: '-5%', background: 'radial-gradient(circle, rgba(6,182,212,0.14) 0%, transparent 70%)' }} />
-      <Orb style={{ width: 300, height: 300, top: '30%', right: '-8%', background: 'radial-gradient(circle, rgba(244,114,182,0.1) 0%, transparent 70%)' }} />
+      <Orb style={{ width: 600, height: 600, top: '-20%', right: '10%', background: 'radial-gradient(circle, rgba(28,26,255,0.16) 0%, transparent 70%)' }} />
+      <Orb style={{ width: 500, height: 500, bottom: '-15%', left: '-5%', background: 'radial-gradient(circle, rgba(14,165,233,0.12) 0%, transparent 70%)' }} />
 
       {/* Dot grid */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none',
-        backgroundImage: 'radial-gradient(rgba(168,85,247,0.08) 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(rgba(28,26,255,0.08) 1px, transparent 1px)',
         backgroundSize: '28px 28px',
       }} />
 
@@ -60,9 +59,9 @@ export default function Register() {
           <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 10, marginBottom: 20, textDecoration: 'none' }}>
             <div style={{
               width: 44, height: 44, borderRadius: 14,
-              background: 'linear-gradient(135deg, #9333ea, #a855f7 50%, #06b6d4)',
+              background: 'linear-gradient(135deg, #1d4ed8, #1C1AFF 50%, #0ea5e9)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 30px rgba(147,51,234,0.5), 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
+              boxShadow: '0 0 30px rgba(28,26,255,0.5), 0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
             }}>
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
@@ -70,7 +69,7 @@ export default function Register() {
             </div>
             <span style={{
               fontSize: 22, fontWeight: 800, letterSpacing: '-0.03em',
-              background: 'linear-gradient(135deg, #c084fc, #22d3ee)',
+              background: 'linear-gradient(135deg, #1C1AFF, #0ea5e9)',
               WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             }}>build.me</span>
           </Link>
@@ -115,7 +114,7 @@ export default function Register() {
           style={{
             borderRadius: 20, padding: 28, position: 'relative', overflow: 'hidden',
             background: 'var(--bg-elev-1)',
-            border: '1px solid rgba(168,85,247,0.15)',
+            border: '1px solid rgba(28,26,255,0.15)',
             boxShadow: '0 1px 0 rgba(255,255,255,0.05) inset, 0 24px 80px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.03)',
             transition: 'transform 0.12s ease',
             transformStyle: 'preserve-3d',
@@ -124,7 +123,7 @@ export default function Register() {
           {/* Top sheen */}
           <div style={{ position: 'absolute', inset: '0 0 auto', height: 1, background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.08), transparent)', pointerEvents: 'none' }} />
           {/* Corner glow */}
-          <div style={{ position: 'absolute', top: -40, left: -40, width: 120, height: 120, background: 'radial-gradient(circle, rgba(168,85,247,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
+          <div style={{ position: 'absolute', top: -40, left: -40, width: 120, height: 120, background: 'radial-gradient(circle, rgba(28,26,255,0.15) 0%, transparent 70%)', pointerEvents: 'none' }} />
 
           <form onSubmit={handleSubmit((data) => register_.mutate(data))} style={{ display: 'flex', flexDirection: 'column', gap: 18 }}>
 
@@ -183,14 +182,14 @@ export default function Register() {
         {/* Footer */}
         <p style={{ textAlign: 'center', fontSize: 11, color: 'var(--text-4)', marginTop: 12 }}>
           By signing up you agree to our{' '}
-          <span style={{ color: '#a855f7', cursor: 'pointer' }}>Terms</span> &amp;{' '}
-          <span style={{ color: '#a855f7', cursor: 'pointer' }}>Privacy Policy</span>
+          <span style={{ color: '#1C1AFF', cursor: 'pointer' }}>Terms</span> &amp;{' '}
+          <span style={{ color: '#1C1AFF', cursor: 'pointer' }}>Privacy Policy</span>
         </p>
 
         <p style={{ textAlign: 'center', fontSize: 13, color: 'var(--text-3)', marginTop: 16 }}>
           Already have an account?{' '}
           <Link to="/login" style={{
-            background: 'linear-gradient(135deg, #a855f7, #22d3ee)',
+            background: 'linear-gradient(135deg, #1C1AFF, #0ea5e9)',
             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
             fontWeight: 700, textDecoration: 'none',
           }}>

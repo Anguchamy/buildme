@@ -31,12 +31,12 @@ function ChevronRight() {
 function DashboardSlide() {
   const stats = [
     { label: 'Total Posts', value: '128', icon: '📝', color: 'from-brand-500/20 to-brand-600/10' },
-    { label: 'Scheduled', value: '24', icon: '📅', color: 'from-purple-500/20 to-purple-600/10' },
+    { label: 'Scheduled', value: '24', icon: '📅', color: 'from-blue-500/20 to-blue-600/10' },
     { label: 'Published', value: '96', icon: '✅', color: 'from-green-500/20 to-green-600/10' },
     { label: 'Impressions', value: '48.2K', icon: '👁️', color: 'from-orange-500/20 to-orange-600/10' },
   ]
   const posts = [
-    { bg: 'bg-gradient-to-br from-pink-500/30 to-purple-500/30', label: 'Instagram', status: 'Published' },
+    { bg: 'bg-gradient-to-br from-blue-500/30 to-sky-500/30', label: 'Instagram', status: 'Published' },
     { bg: 'bg-gradient-to-br from-blue-500/30 to-cyan-500/30', label: 'LinkedIn', status: 'Scheduled' },
     { bg: 'bg-gradient-to-br from-red-500/30 to-orange-500/30', label: 'YouTube', status: 'Draft' },
   ]
@@ -88,8 +88,8 @@ function CalendarSlide() {
     1: [{ label: 'Instagram post', color: 'bg-pink-500/40' }],
     2: [{ label: 'LinkedIn article', color: 'bg-blue-500/40' }, { label: 'Twitter thread', color: 'bg-sky-500/40' }],
     4: [{ label: 'YouTube Short', color: 'bg-red-500/40' }],
-    5: [{ label: 'TikTok video', color: 'bg-purple-500/40' }, { label: 'Reels', color: 'bg-pink-500/40' }],
-    6: [{ label: 'Pinterest pin', color: 'bg-rose-500/40' }],
+    5: [{ label: 'TikTok video', color: 'bg-slate-700/50' }, { label: 'Reels', color: 'bg-pink-500/40' }],
+    6: [{ label: 'Pinterest pin', color: 'bg-red-600/40' }],
   }
   return (
     <div className="rounded-xl border border-white/10 bg-surface-1 p-3">
@@ -131,20 +131,20 @@ function CalendarSlide() {
 
 function GridPlannerSlide() {
   const cells = [
-    { bg: 'from-pink-400/40 to-fuchsia-500/40', label: 'New collection' },
+    { bg: 'from-blue-400/40 to-sky-500/40', label: 'New collection' },
     { bg: 'from-orange-400/40 to-amber-500/40', label: 'Behind scenes' },
     { bg: 'from-cyan-400/40 to-blue-500/40', label: 'Product shot' },
     { bg: 'from-green-400/40 to-emerald-500/40', label: 'Team photo' },
-    { bg: 'from-purple-400/40 to-violet-500/40', label: 'Quote card' },
-    { bg: 'from-rose-400/40 to-pink-500/40', label: 'Reel cover' },
-    { bg: 'from-sky-400/40 to-indigo-500/40', label: 'Collab post' },
+    { bg: 'from-blue-500/40 to-blue-700/40', label: 'Quote card' },
+    { bg: 'from-slate-400/40 to-slate-500/40', label: 'Reel cover' },
+    { bg: 'from-sky-400/40 to-blue-500/40', label: 'Collab post' },
     { bg: 'from-yellow-400/40 to-orange-500/40', label: 'Giveaway' },
     { bg: 'from-teal-400/40 to-cyan-500/40', label: '+ Add post', empty: true },
   ]
   return (
     <div className="flex flex-col gap-3">
       <div className="flex items-center gap-2">
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-pink-500 to-fuchsia-600 flex items-center justify-center text-sm">✦</div>
+        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-sky-600 flex items-center justify-center text-sm">✦</div>
         <div>
           <p className="text-sm font-medium text-white">@yourbrand</p>
           <p className="text-xs text-gray-400">Instagram Grid Preview</p>
@@ -216,7 +216,7 @@ function AnalyticsSlide() {
   const platforms = [
     { name: 'Instagram', pct: 42, color: 'bg-pink-500' },
     { name: 'LinkedIn', pct: 28, color: 'bg-blue-500' },
-    { name: 'TikTok', pct: 18, color: 'bg-purple-500' },
+    { name: 'TikTok', pct: 18, color: 'bg-slate-800' },
     { name: 'Twitter', pct: 12, color: 'bg-sky-500' },
   ]
   return (

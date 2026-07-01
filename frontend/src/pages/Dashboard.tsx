@@ -13,7 +13,7 @@ import { getPlatformColor, getPlatformIcon } from '@/utils/helpers'
 import { Link } from 'react-router-dom'
 
 /* ── Mini section card wrapper ───────────────────────────── */
-function SectionCard({ children, accentColor = '#a855f7' }: { children: React.ReactNode; accentColor?: string }) {
+function SectionCard({ children, accentColor = '#1C1AFF' }: { children: React.ReactNode; accentColor?: string }) {
   return (
     <div style={{
       borderRadius: 16, padding: '18px 20px',
@@ -70,7 +70,7 @@ export default function Dashboard() {
         <div>
           <h1 style={{ fontSize: 24, fontWeight: 800, letterSpacing: '-0.03em', color: 'var(--text-1)', marginBottom: 4 }}>
             {greeting},{' '}
-            <span style={{ background: 'linear-gradient(135deg, #c084fc, #22d3ee)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+            <span style={{ background: 'linear-gradient(135deg, #1C1AFF, #0ea5e9)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
               {user?.fullName?.split(' ')[0]}!
             </span>
           </h1>
@@ -116,15 +116,15 @@ export default function Dashboard() {
             <div style={{
               borderRadius: 16, padding: '48px 24px', textAlign: 'center',
               background: 'var(--bg-elev-1)',
-              border: '1px solid rgba(168,85,247,0.1)',
+              border: '1px solid rgba(28,26,255,0.1)',
               boxShadow: '0 1px 0 rgba(255,255,255,0.04) inset',
             }}>
               <div style={{
                 width: 56, height: 56, borderRadius: 16,
-                background: 'rgba(168,85,247,0.1)', border: '1px solid rgba(168,85,247,0.2)',
+                background: 'rgba(28,26,255,0.1)', border: '1px solid rgba(28,26,255,0.2)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 fontSize: 24, margin: '0 auto 16px',
-                boxShadow: '0 0 20px rgba(168,85,247,0.15)',
+                boxShadow: '0 0 20px rgba(28,26,255,0.15)',
               }}>✏️</div>
               <p style={{ fontSize: 15, fontWeight: 700, color: 'var(--text-2)', marginBottom: 6 }}>No posts yet</p>
               <p style={{ fontSize: 13, color: 'var(--text-3)', marginBottom: 20 }}>Create your first post to get started</p>
@@ -137,14 +137,14 @@ export default function Dashboard() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
 
           {/* Activity summary */}
-          <SectionCard accentColor="#a855f7">
+          <SectionCard accentColor="#1C1AFF">
             <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', marginBottom: 14 }}>Activity Summary</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 11 }}>
               {[
                 { label: 'Drafts',      value: draftCount,                     color: 'var(--text-4)' },
-                { label: 'Scheduled',   value: scheduledCount,                  color: '#a855f7' },
+                { label: 'Scheduled',   value: scheduledCount,                  color: '#1C1AFF' },
                 { label: 'Published',   value: publishedCount,                  color: '#34d399' },
-                { label: 'Engagement',  value: totalEngagement.toLocaleString(), color: '#22d3ee' },
+                { label: 'Engagement',  value: totalEngagement.toLocaleString(), color: '#0ea5e9' },
               ].map(item => (
                 <div key={item.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -159,7 +159,7 @@ export default function Dashboard() {
 
           {/* Active platforms */}
           {platformActivity.length > 0 && (
-            <SectionCard accentColor="#22d3ee">
+            <SectionCard accentColor="#0ea5e9">
               <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', marginBottom: 14 }}>Active Platforms</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {platformActivity.map(({ platform, count }) => (
@@ -197,12 +197,12 @@ export default function Dashboard() {
                       display: 'flex', alignItems: 'flex-start', gap: 10, padding: '8px 10px', borderRadius: 10, cursor: 'pointer', transition: 'all 0.2s',
                       background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)',
                     }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(168,85,247,0.06)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(168,85,247,0.15)' }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(28,26,255,0.06)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(28,26,255,0.15)' }}
                     onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.02)'; (e.currentTarget as HTMLDivElement).style.borderColor = 'rgba(255,255,255,0.05)' }}
                   >
-                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#a855f7', boxShadow: '0 0 6px rgba(168,85,247,0.7)', marginTop: 5, flexShrink: 0 }} />
+                    <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#1C1AFF', boxShadow: '0 0 6px rgba(28,26,255,0.7)', marginTop: 5, flexShrink: 0 }} />
                     <div style={{ minWidth: 0, flex: 1 }}>
-                      <p style={{ fontSize: 11, color: 'rgba(226,232,240,0.8)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ fontSize: 11, color: '#334155', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {post.caption?.slice(0, 50) ?? 'No caption'}
                       </p>
                       <p style={{ fontSize: 10, color: 'var(--text-4)', marginTop: 2 }}>
@@ -216,13 +216,13 @@ export default function Dashboard() {
           )}
 
           {/* Quick actions */}
-          <SectionCard accentColor="#f472b6">
+          <SectionCard accentColor="#0ea5e9">
             <h3 style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-2)', marginBottom: 12 }}>Quick Actions</h3>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
               {[
-                { label: 'New Post',  to: '/app/compose',    icon: '✏️', color: '#a855f7' },
-                { label: 'Calendar',  to: '/app/calendar',   icon: '📅', color: '#22d3ee' },
-                { label: 'Media',     to: '/app/media',      icon: '🖼️', color: '#f472b6' },
+                { label: 'New Post',  to: '/app/compose',    icon: '✏️', color: '#1C1AFF' },
+                { label: 'Calendar',  to: '/app/calendar',   icon: '📅', color: '#0ea5e9' },
+                { label: 'Media',     to: '/app/media',      icon: '🖼️', color: '#1d4ed8' },
                 { label: 'Analytics', to: '/app/analytics',  icon: '📊', color: '#34d399' },
               ].map(a => (
                 <Link

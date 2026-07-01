@@ -24,19 +24,18 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     const inlineStyle: React.CSSProperties = {}
 
     if (variant === 'gradient' || variant === 'primary') {
-      inlineStyle.background = 'linear-gradient(135deg, #9333ea 0%, #a855f7 50%, #06b6d4 100%)'
-      inlineStyle.backgroundSize = '200% 200%'
-      inlineStyle.boxShadow = '0 4px 20px rgba(147,51,234,0.5), inset 0 1px 0 rgba(255,255,255,0.12)'
+      inlineStyle.background = '#1C1AFF'
+      inlineStyle.boxShadow = '0 2px 8px rgba(28,26,255,0.30), inset 0 1px 0 rgba(255,255,255,0.15)'
       inlineStyle.color = '#ffffff'
     }
     if (variant === 'neon') {
       inlineStyle.background = 'transparent'
-      inlineStyle.border = '1px solid rgba(168,85,247,0.5)'
-      inlineStyle.boxShadow = '0 0 20px rgba(168,85,247,0.25), inset 0 0 20px rgba(168,85,247,0.05)'
-      inlineStyle.color = '#c084fc'
+      inlineStyle.border = '1px solid rgba(28,26,255,0.5)'
+      inlineStyle.boxShadow = '0 2px 8px rgba(28,26,255,0.15)'
+      inlineStyle.color = '#1d4ed8'
     }
     if (glow) {
-      inlineStyle.boxShadow = (inlineStyle.boxShadow ?? '') + ', 0 0 40px rgba(168,85,247,0.3)'
+      inlineStyle.boxShadow = (inlineStyle.boxShadow ?? '') + ', 0 4px 20px rgba(28,26,255,0.25)'
     }
 
     /* ── className per variant — uses .btn-* CSS classes for theme-aware bg/text ── */
@@ -45,7 +44,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       gradient:  'hover:opacity-90 active:opacity-80 active:scale-[0.97]',
       secondary: 'btn-secondary active:scale-[0.97]',
       ghost:     'btn-ghost active:scale-[0.97]',
-      neon:      'hover:shadow-neon-purple hover:border-purple-500/80 active:scale-[0.97]',
+      neon:      'hover:bg-brand-50 hover:border-brand-600 active:scale-[0.97]',
       glass:     'btn-glass active:scale-[0.97]',
       danger:    'btn-danger active:scale-[0.97]',
     }
@@ -57,7 +56,7 @@ const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         style={{ ...inlineStyle, transition: 'all 0.2s cubic-bezier(0.16,1,0.3,1)', ...style }}
         className={classNames(
           'inline-flex items-center justify-center font-semibold relative overflow-hidden select-none',
-          'focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500/40 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent',
+          'focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 focus-visible:ring-offset-1 focus-visible:ring-offset-transparent',
           'disabled:opacity-40 disabled:cursor-not-allowed disabled:pointer-events-none',
           variantClass[variant] ?? '',
           sizes[size],

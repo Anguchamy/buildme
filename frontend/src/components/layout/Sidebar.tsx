@@ -76,20 +76,20 @@ export default function Sidebar() {
       flexShrink: 0,
       position: 'relative',
       background: 'linear-gradient(180deg, #0c1221 0%, #070b14 60%, #03040a 100%)',
-      borderRight: '1px solid rgba(168,85,247,0.1)',
+      borderRight: '1px solid rgba(28,26,255,0.1)',
     }}>
 
       {/* Ambient glow at top */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, height: 200,
-        background: 'radial-gradient(ellipse at 50% -20%, rgba(147,51,234,0.18) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse at 50% -20%, rgba(28,26,255,0.18) 0%, transparent 70%)',
         pointerEvents: 'none',
       }} />
 
       {/* Dot grid pattern overlay */}
       <div style={{
         position: 'absolute', inset: 0, pointerEvents: 'none', opacity: 0.4,
-        backgroundImage: 'radial-gradient(rgba(168,85,247,0.12) 1px, transparent 1px)',
+        backgroundImage: 'radial-gradient(rgba(28,26,255,0.12) 1px, transparent 1px)',
         backgroundSize: '20px 20px',
       }} />
 
@@ -97,17 +97,17 @@ export default function Sidebar() {
       <div style={{
         height: 64, padding: '0 20px',
         display: 'flex', alignItems: 'center',
-        borderBottom: '1px solid rgba(168,85,247,0.1)',
+        borderBottom: '1px solid rgba(28,26,255,0.1)',
         position: 'relative', zIndex: 1,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           {/* 3D logo mark */}
           <div style={{
             width: 34, height: 34, borderRadius: 10,
-            background: 'linear-gradient(135deg, #9333ea, #a855f7 50%, #06b6d4)',
+            background: 'linear-gradient(135deg, #1C1AFF, #3b82f6 50%, #0ea5e9)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             flexShrink: 0,
-            boxShadow: '0 0 20px rgba(147,51,234,0.5), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
+            boxShadow: '0 0 20px rgba(28,26,255,0.5), 0 4px 12px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
             position: 'relative',
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -117,7 +117,7 @@ export default function Sidebar() {
           <div>
             <div style={{ fontSize: 14, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1 }}>
               <span style={{
-                background: 'linear-gradient(135deg, #c084fc, #22d3ee)',
+                background: 'linear-gradient(135deg, #1C1AFF, #0ea5e9)',
                 WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text',
               }}>build.me</span>
             </div>
@@ -131,10 +131,10 @@ export default function Sidebar() {
       {/* ── Workspace switcher ── */}
       <div style={{
         padding: '10px 12px',
-        borderBottom: '1px solid rgba(168,85,247,0.08)',
+        borderBottom: '1px solid rgba(28,26,255,0.08)',
         position: 'relative', zIndex: 1,
       }}>
-        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, color: 'rgba(168,85,247,0.7)', paddingLeft: 4 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 6, color: 'rgba(28,26,255,0.7)', paddingLeft: 4 }}>
           Workspace
         </div>
         <div style={{ position: 'relative' }}>
@@ -143,8 +143,8 @@ export default function Sidebar() {
             onChange={(e) => setCurrentWorkspace(Number(e.target.value))}
             style={{
               width: '100%',
-              background: 'rgba(168,85,247,0.06)',
-              border: '1px solid rgba(168,85,247,0.2)',
+              background: 'rgba(28,26,255,0.06)',
+              border: '1px solid rgba(28,26,255,0.2)',
               borderRadius: 10,
               padding: '7px 28px 7px 10px',
               fontSize: 12,
@@ -155,18 +155,18 @@ export default function Sidebar() {
               transition: 'border-color 0.2s, box-shadow 0.2s',
             }}
             onFocus={(e) => {
-              e.target.style.borderColor = 'rgba(168,85,247,0.5)'
-              e.target.style.boxShadow = '0 0 0 3px rgba(168,85,247,0.12)'
+              e.target.style.borderColor = 'rgba(28,26,255,0.5)'
+              e.target.style.boxShadow = '0 0 0 3px rgba(28,26,255,0.12)'
             }}
             onBlur={(e) => {
-              e.target.style.borderColor = 'rgba(168,85,247,0.2)'
+              e.target.style.borderColor = 'rgba(28,26,255,0.2)'
               e.target.style.boxShadow = 'none'
             }}
           >
             {workspaces.map((w) => <option key={w.id} value={w.id} style={{ background: '#111827' }}>{w.name}</option>)}
             {workspaces.length === 0 && <option value="" disabled>No workspaces</option>}
           </select>
-          <svg style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: 'rgba(168,85,247,0.6)', pointerEvents: 'none' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          <svg style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: 'rgba(28,26,255,0.6)', pointerEvents: 'none' }} width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 12 15 18 9"/></svg>
         </div>
       </div>
 
@@ -187,8 +187,8 @@ export default function Sidebar() {
                   <span style={{
                     flexShrink: 0,
                     transition: 'filter 0.2s',
-                    filter: isActive ? 'drop-shadow(0 0 8px rgba(168,85,247,0.8))' : 'none',
-                    color: isActive ? '#c084fc' : undefined,
+                    filter: isActive ? 'drop-shadow(0 0 8px rgba(28,26,255,0.8))' : 'none',
+                    color: isActive ? '#1C1AFF' : undefined,
                   }}>
                     {item.icon}
                   </span>
@@ -198,8 +198,8 @@ export default function Sidebar() {
                   {item.highlight && !isActive && (
                     <span style={{
                       width: 6, height: 6, borderRadius: '50%', flexShrink: 0,
-                      background: '#a855f7',
-                      boxShadow: '0 0 8px rgba(168,85,247,0.8)',
+                      background: '#1C1AFF',
+                      boxShadow: '0 0 8px rgba(28,26,255,0.8)',
                       animation: 'glowPulse 2s ease-in-out infinite',
                     }} />
                   )}
@@ -213,7 +213,7 @@ export default function Sidebar() {
       {/* ── User footer ── */}
       <div style={{
         padding: 12,
-        borderTop: '1px solid rgba(168,85,247,0.08)',
+        borderTop: '1px solid rgba(28,26,255,0.08)',
         position: 'relative', zIndex: 1,
       }}>
         <div style={{
@@ -225,8 +225,8 @@ export default function Sidebar() {
           cursor: 'default',
         }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.background = 'rgba(168,85,247,0.06)'
-            e.currentTarget.style.borderColor = 'rgba(168,85,247,0.15)'
+            e.currentTarget.style.background = 'rgba(28,26,255,0.06)'
+            e.currentTarget.style.borderColor = 'rgba(28,26,255,0.15)'
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'rgba(255,255,255,0.03)'
@@ -236,10 +236,10 @@ export default function Sidebar() {
           {/* Avatar */}
           <div style={{
             width: 30, height: 30, borderRadius: '50%', flexShrink: 0,
-            background: 'linear-gradient(135deg, #9333ea, #06b6d4)',
+            background: 'linear-gradient(135deg, #1C1AFF, #0ea5e9)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: 12, fontWeight: 700, color: 'white',
-            boxShadow: '0 0 12px rgba(147,51,234,0.4)',
+            boxShadow: '0 0 12px rgba(28,26,255,0.4)',
           }}>
             {initial}
           </div>
@@ -263,8 +263,8 @@ export default function Sidebar() {
       {/* Light mode overrides */}
       <style>{`
         html:not(.dark) aside {
-          background: linear-gradient(180deg, #ffffff 0%, #f8f9ff 100%) !important;
-          border-right-color: rgba(147,51,234,0.1) !important;
+          background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%) !important;
+          border-right-color: rgba(28,26,255,0.1) !important;
         }
         html:not(.dark) aside select { color: #1e293b !important; }
       `}</style>

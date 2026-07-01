@@ -6,54 +6,53 @@ export default {
   theme: {
     extend: {
       colors: {
-        // ── Neon violet/purple primary ──
+        // ── LinkPlease-style primary blue (Tailwind blue-600 family) ──
         brand: {
-          50:  '#faf5ff',
-          100: '#f3e8ff',
-          200: '#e9d5ff',
-          300: '#d8b4fe',
-          400: '#c084fc',
-          500: '#a855f7',
-          600: '#9333ea',
-          700: '#7e22ce',
-          800: '#6b21a8',
-          900: '#581c87',
-          950: '#3b0764',
+          50:  '#eff6ff',
+          100: '#dbeafe',
+          200: '#bfdbfe',
+          300: '#93c5fd',
+          400: '#60a5fa',
+          500: '#3b82f6',
+          600: '#1C1AFF',
+          700: '#1d4ed8',
+          800: '#1e40af',
+          900: '#1e3a8a',
+          950: '#172554',
         },
-        // ── Neon cyan accent ──
+        // ── Accent kept as a softer sky blue (paired highlights) ──
         accent: {
-          300: '#67e8f9',
-          400: '#22d3ee',
-          500: '#06b6d4',
-          600: '#0891b2',
-          700: '#0e7490',
+          300: '#7dd3fc',
+          400: '#38bdf8',
+          500: '#0ea5e9',
+          600: '#0284c7',
+          700: '#0369a1',
         },
-        // ── Neon pink/rose ──
+        // ── Retained "neon" keys for legacy component references, mapped to blue-safe colors ──
         neon: {
           pink:   '#f472b6',
           rose:   '#fb7185',
-          violet: '#a78bfa',
-          cyan:   '#22d3ee',
-          green:  '#34d399',
-          amber:  '#fbbf24',
+          violet: '#3b82f6',
+          cyan:   '#0ea5e9',
+          green:  '#10b981',
+          amber:  '#f59e0b',
         },
-        // ── Deep space dark surfaces ──
+        // ── Neutral surfaces (light-first, with muted dark counterparts) ──
         surface: {
-          0:  '#03040a',   // deepest black-blue
-          1:  '#070b14',
-          2:  '#0c1221',
-          3:  '#111827',   // cards base
-          4:  '#1a2640',
-          5:  '#1f3054',
-          6:  '#243868',
+          0:  '#ffffff',
+          1:  '#f9fafb',
+          2:  '#f3f4f6',
+          3:  '#e5e7eb',
+          4:  '#d1d5db',
+          5:  '#9ca3af',
+          6:  '#6b7280',
         },
-        // ── Light mode (minimal, stays clean) ──
         light: {
           0: '#ffffff',
-          1: '#f8f9ff',
-          2: '#f0f2ff',
-          3: '#e4e7ff',
-          4: '#c7ccf5',
+          1: '#f9fafb',
+          2: '#f3f4f6',
+          3: '#e5e7eb',
+          4: '#d1d5db',
         },
         success: { 400: '#34d399', 500: '#10b981' },
       },
@@ -63,37 +62,32 @@ export default {
         mono:    ['JetBrains Mono', 'Fira Code', 'monospace'],
       },
       backgroundImage: {
-        // Primary gradients
-        'grad-primary':   'linear-gradient(135deg, #9333ea 0%, #a855f7 40%, #06b6d4 100%)',
-        'grad-warm':      'linear-gradient(135deg, #9333ea 0%, #f472b6 100%)',
-        'grad-cool':      'linear-gradient(135deg, #06b6d4 0%, #a855f7 100%)',
-        'grad-glow':      'radial-gradient(ellipse at 50% 0%, rgba(168,85,247,0.25) 0%, transparent 70%)',
-        'grad-card':      'linear-gradient(145deg, rgba(17,24,39,0.95) 0%, rgba(7,11,20,0.98) 100%)',
-        'grad-card-glow': 'linear-gradient(145deg, rgba(147,51,234,0.08) 0%, rgba(6,182,212,0.04) 100%)',
-        'grad-mesh':      'radial-gradient(at 20% 20%, rgba(147,51,234,0.15) 0px, transparent 50%), radial-gradient(at 80% 10%, rgba(6,182,212,0.1) 0px, transparent 50%), radial-gradient(at 50% 80%, rgba(244,114,182,0.08) 0px, transparent 50%)',
-        // Shimmer
-        'shimmer':        'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.07) 50%, transparent 100%)',
-        'shimmer-color':  'linear-gradient(90deg, transparent 0%, rgba(168,85,247,0.15) 50%, transparent 100%)',
+        // Solid-blue gradients only — no purple/pink
+        'grad-primary':   'linear-gradient(135deg, #1C1AFF 0%, #3b82f6 100%)',
+        'grad-warm':      'linear-gradient(135deg, #1C1AFF 0%, #0ea5e9 100%)',
+        'grad-cool':      'linear-gradient(135deg, #0ea5e9 0%, #1C1AFF 100%)',
+        'grad-glow':      'radial-gradient(ellipse at 50% 0%, rgba(28,26,255,0.15) 0%, transparent 70%)',
+        'grad-card':      'linear-gradient(145deg, #ffffff 0%, #f9fafb 100%)',
+        'grad-card-glow': 'linear-gradient(145deg, rgba(28,26,255,0.04) 0%, rgba(14,165,233,0.02) 100%)',
+        'grad-mesh':      'radial-gradient(at 20% 20%, rgba(28,26,255,0.08) 0px, transparent 50%), radial-gradient(at 80% 10%, rgba(14,165,233,0.06) 0px, transparent 50%)',
+        'shimmer':        'linear-gradient(90deg, transparent 0%, rgba(28,26,255,0.06) 50%, transparent 100%)',
+        'shimmer-color':  'linear-gradient(90deg, transparent 0%, rgba(28,26,255,0.1) 50%, transparent 100%)',
       },
       boxShadow: {
-        // 3D depth shadows
-        'card-3d':      '0 1px 0 0 rgba(255,255,255,0.05) inset, 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04)',
-        'card-3d-hover':'0 1px 0 0 rgba(255,255,255,0.08) inset, 0 28px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(168,85,247,0.25), 0 0 40px rgba(168,85,247,0.12)',
-        'card-light':   '0 1px 0 rgba(255,255,255,0.8) inset, 0 4px 24px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05)',
-        'card-light-hover': '0 1px 0 rgba(255,255,255,0.9) inset, 0 12px 40px rgba(147,51,234,0.12), 0 0 0 1px rgba(147,51,234,0.15)',
-        // Neon glows
-        'neon-purple':  '0 0 20px rgba(168,85,247,0.5), 0 0 60px rgba(168,85,247,0.2)',
-        'neon-cyan':    '0 0 20px rgba(6,182,212,0.5),  0 0 60px rgba(6,182,212,0.2)',
-        'neon-pink':    '0 0 20px rgba(244,114,182,0.5),0 0 60px rgba(244,114,182,0.2)',
-        'neon-sm':      '0 0 12px rgba(168,85,247,0.4)',
-        // Buttons
-        'btn-primary':  '0 4px 20px rgba(147,51,234,0.5), 0 1px 0 rgba(255,255,255,0.1) inset',
-        'btn-primary-h':'0 8px 32px rgba(147,51,234,0.7), 0 1px 0 rgba(255,255,255,0.15) inset',
-        // Input
-        'input-focus':  '0 0 0 3px rgba(168,85,247,0.2), 0 0 20px rgba(168,85,247,0.08)',
-        // General
-        'glow':         '0 0 40px rgba(168,85,247,0.2)',
-        'glow-lg':      '0 0 80px rgba(168,85,247,0.3)',
+        // Soft, LinkPlease-style shadows — no neon
+        'card-3d':       '0 1px 2px rgba(15,23,42,0.04), 0 4px 12px rgba(15,23,42,0.06)',
+        'card-3d-hover': '0 4px 12px rgba(28,26,255,0.10), 0 12px 32px rgba(15,23,42,0.08)',
+        'card-light':    '0 1px 2px rgba(15,23,42,0.04), 0 2px 8px rgba(15,23,42,0.06)',
+        'card-light-hover': '0 4px 12px rgba(28,26,255,0.12), 0 12px 32px rgba(15,23,42,0.08)',
+        'neon-purple':   '0 4px 12px rgba(28,26,255,0.20)',
+        'neon-cyan':     '0 4px 12px rgba(14,165,233,0.20)',
+        'neon-pink':     '0 4px 12px rgba(28,26,255,0.20)',
+        'neon-sm':       '0 2px 8px rgba(28,26,255,0.15)',
+        'btn-primary':   '0 2px 8px rgba(28,26,255,0.30)',
+        'btn-primary-h': '0 4px 16px rgba(28,26,255,0.40)',
+        'input-focus':   '0 0 0 3px rgba(28,26,255,0.15)',
+        'glow':          '0 4px 20px rgba(28,26,255,0.12)',
+        'glow-lg':       '0 8px 32px rgba(28,26,255,0.15)',
       },
       animation: {
         'fade-in':      'fadeIn 0.3s ease-out',

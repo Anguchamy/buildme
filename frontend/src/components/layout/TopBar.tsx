@@ -72,14 +72,14 @@ export default function TopBar() {
         background: 'rgba(7,11,20,0.95)',
         backdropFilter: 'blur(20px)',
         WebkitBackdropFilter: 'blur(20px)',
-        borderBottom: '1px solid rgba(168,85,247,0.1)',
+        borderBottom: '1px solid rgba(28,26,255,0.1)',
         zIndex: 50,
       }}
     >
       <style>{`
         html:not(.dark) header.app-topbar {
           background: rgba(255,255,255,0.92) !important;
-          border-bottom-color: rgba(147,51,234,0.1) !important;
+          border-bottom-color: rgba(28,26,255,0.1) !important;
         }
         html:not(.dark) .app-topbar .input { color: #0f172a; }
         html:not(.dark) .app-topbar .input::placeholder { color: #94a3b8; }
@@ -89,7 +89,7 @@ export default function TopBar() {
           right: 0;
           z-index: 1000;
           background: linear-gradient(145deg, #111827 0%, #070b14 100%);
-          border: 1px solid rgba(168,85,247,0.18);
+          border: 1px solid rgba(28,26,255,0.18);
           border-radius: 16px;
           box-shadow: 0 24px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.03);
           overflow: hidden;
@@ -134,7 +134,7 @@ export default function TopBar() {
           onClick={toggleTheme}
           className="p-2 rounded-lg transition-all"
         style={{ color: 'var(--text-3)', background: 'transparent' }}
-        onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(168,85,247,0.1)'; b.style.color = '#c084fc' }}
+        onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(28,26,255,0.1)'; b.style.color = '#1C1AFF' }}
         onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'var(--text-3)' }}
         >
           {theme === 'dark' ? <SunIcon /> : <MoonIcon />}
@@ -146,7 +146,7 @@ export default function TopBar() {
             onClick={() => { setShowNotifs(!showNotifs); setShowUser(false) }}
             className="relative p-2 rounded-lg transition-all"
             style={{ color: 'var(--text-3)', background: 'transparent' }}
-            onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(168,85,247,0.1)'; b.style.color = '#c084fc' }}
+            onMouseEnter={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'rgba(28,26,255,0.1)'; b.style.color = '#1C1AFF' }}
             onMouseLeave={(e) => { const b = e.currentTarget as HTMLButtonElement; b.style.background = 'transparent'; b.style.color = 'var(--text-3)' }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

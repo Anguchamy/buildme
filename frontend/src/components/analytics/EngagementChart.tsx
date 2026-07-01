@@ -17,7 +17,7 @@ export default function EngagementChart({ data }: Props) {
       {/* Neon glow blob behind chart */}
       <div style={{
         position: 'absolute', bottom: 0, left: '20%', right: '20%', height: '40%',
-        background: 'radial-gradient(ellipse, rgba(168,85,247,0.1) 0%, transparent 70%)',
+        background: 'radial-gradient(ellipse, rgba(28,26,255,0.1) 0%, transparent 70%)',
         pointerEvents: 'none', filter: 'blur(20px)',
       }} />
 
@@ -28,7 +28,7 @@ export default function EngagementChart({ data }: Props) {
         </div>
         <div style={{ display: 'flex', gap: 12, fontSize: 11, color: 'var(--text-2)' }}>
           {[
-            { color: '#a855f7', label: 'Likes' },
+            { color: '#1C1AFF', label: 'Likes' },
             { color: '#34d399', label: 'Comments' },
             { color: '#22d3ee', label: 'Shares' },
           ].map(({ color, label }) => (
@@ -44,7 +44,7 @@ export default function EngagementChart({ data }: Props) {
         <AreaChart data={chartData} margin={{ top: 4, right: 4, left: -20, bottom: 0 }}>
           <defs>
             {[
-              { id: 'likesGrad',    color: '#a855f7' },
+              { id: 'likesGrad',    color: '#1C1AFF' },
               { id: 'commentsGrad', color: '#34d399' },
               { id: 'sharesGrad',   color: '#22d3ee' },
             ].map(({ id, color }) => (
@@ -60,16 +60,16 @@ export default function EngagementChart({ data }: Props) {
           <Tooltip
             contentStyle={{
               background: 'rgba(12,18,33,0.95)',
-              border: '1px solid rgba(168,85,247,0.2)',
+              border: '1px solid rgba(28,26,255,0.2)',
               borderRadius: 12,
-              boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 20px rgba(168,85,247,0.1)',
+              boxShadow: '0 20px 60px rgba(0,0,0,0.6), 0 0 20px rgba(28,26,255,0.1)',
               fontSize: 12,
               backdropFilter: 'blur(12px)',
             }}
             labelStyle={{ color: 'var(--text-2)', fontWeight: 700, marginBottom: 4 }}
             itemStyle={{ color: 'var(--text-2)' }}
           />
-          <Area type="monotone" dataKey="likes"    stroke="#a855f7" strokeWidth={2} fill="url(#likesGrad)"    dot={false} activeDot={{ r: 5, fill: '#a855f7', strokeWidth: 0, filter: 'drop-shadow(0 0 6px #a855f7)' }} />
+          <Area type="monotone" dataKey="likes"    stroke="#1C1AFF" strokeWidth={2} fill="url(#likesGrad)"    dot={false} activeDot={{ r: 5, fill: '#1C1AFF', strokeWidth: 0, filter: 'drop-shadow(0 0 6px #1C1AFF)' }} />
           <Area type="monotone" dataKey="comments" stroke="#34d399" strokeWidth={2} fill="url(#commentsGrad)" dot={false} activeDot={{ r: 5, fill: '#34d399', strokeWidth: 0, filter: 'drop-shadow(0 0 6px #34d399)' }} />
           <Area type="monotone" dataKey="shares"   stroke="#22d3ee" strokeWidth={2} fill="url(#sharesGrad)"   dot={false} activeDot={{ r: 5, fill: '#22d3ee', strokeWidth: 0, filter: 'drop-shadow(0 0 6px #22d3ee)' }} />
         </AreaChart>
