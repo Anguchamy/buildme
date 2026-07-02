@@ -10,4 +10,5 @@ import java.util.Optional;
 public interface SubscriptionRepository extends JpaRepository<Subscription, Long> {
     Optional<Subscription> findByWorkspaceId(Long workspaceId);
     Optional<Subscription> findByPaymentSubscriptionId(String paymentSubscriptionId);
+    boolean existsByRazorpayPaymentId(String razorpayPaymentId);
 }

@@ -174,8 +174,8 @@ const platforms = [
 
 const plans = [
   { name: 'Free', price: '₹0', period: 'forever', features: ['1 workspace','30 posts/month','3 platforms','Basic analytics','Media library'], cta: 'Get Started', gradient: null },
-  { name: 'Pro',  price: '₹499', period: '/month', features: ['3 workspaces','Unlimited posts','All 7 platforms','AI captions','Advanced analytics','3 team seats'], cta: 'Start Free Trial', gradient: 'linear-gradient(135deg,#1d4ed8,#1C1AFF 50%,#0ea5e9)', popular: true },
-  { name: 'Agency', price: '₹1,499', period: '/month', features: ['Unlimited workspaces','Unlimited posts','All platforms','10 team seats','White-label reports','Priority support'], cta: 'Contact Sales', gradient: null },
+  { name: 'Pro',  price: '₹1,599', period: '/month', features: ['3 workspaces','Unlimited posts','All 7 platforms','AI captions','Advanced analytics','3 team seats'], cta: 'Start Free Trial', gradient: 'linear-gradient(135deg,#1d4ed8,#1C1AFF 50%,#0ea5e9)', popular: true },
+  { name: 'Agency', price: '₹3,999', period: '/month', features: ['Unlimited workspaces','Unlimited posts','All platforms','10 team seats','White-label reports','Priority support'], cta: 'Contact Sales', gradient: null },
 ]
 
 const stats = [

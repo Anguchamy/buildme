@@ -127,4 +127,25 @@ public class RazorpayService {
             throw new RuntimeException("Failed to fetch Razorpay payment: " + e.getMessage(), e);
         }
     }
+
+    /**
+     * Fetches the Order so verifyAndActivate can cross-check the workspaceId/
+     * planType/amount the client sent against what we told Razorpay when we
+     * created the order. Without this, a client could pay for one plan and
+     * ask us to activate another.
+     */
+    public Order fetchOrder(String orderId) {
+        try {
+            return client.orders.fetch(orderId);
+        } catch (RazorpayException e) {
+            throw new RuntimeException("Failed to fetch Razorpay order: " + e.getMessage(), e);
+        }
+    }
+
+    /** Server-side price authority. Never trust a client-supplied amount. */
+    public long expectedPricePaise(String planType) {
+        if ("PRO".equalsIgnoreCase(planType))    return PRICE_PRO_PAISE;
+        if ("AGENCY".equalsIgnoreCase(planType)) return PRICE_AGENCY_PAISE;
+        throw new IllegalArgumentException("Unknown plan: " + planType);
+    }
 }

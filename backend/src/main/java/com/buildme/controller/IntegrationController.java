@@ -9,6 +9,7 @@ import com.buildme.model.Platform;
 import com.buildme.model.SocialAccount;
 import com.buildme.model.User;
 import com.buildme.repository.SocialAccountRepository;
+import com.buildme.service.WorkspaceAuthorization;
 import com.buildme.service.platform.InstagramService;
 import com.buildme.service.platform.SocialMediaService;
 import com.buildme.util.InstagramSessionTokenUtil;
@@ -59,6 +60,7 @@ public class IntegrationController {
     private final InstagramService instagramService;
     private final InstagramSessionTokenUtil instagramSessionTokenUtil;
     private final ObjectMapper objectMapper;
+    private final WorkspaceAuthorization auth;
 
     /** TTL for the IG picker session token. 10 minutes — long enough to read
      *  the list, short enough to limit replay if the URL leaks. */
@@ -77,8 +79,10 @@ public class IntegrationController {
     @GetMapping("/{workspaceId}/accounts")
     @Operation(summary = "List connected social accounts for workspace")
     public ResponseEntity<List<SocialAccountResponse>> listAccounts(
-        @PathVariable Long workspaceId
+        @PathVariable Long workspaceId,
+        @AuthenticationPrincipal User user
     ) {
+        auth.assertWorkspaceOwner(user.getId(), workspaceId);
         List<SocialAccountResponse> accounts = socialAccountRepository
             .findByWorkspaceId(workspaceId)
             .stream()
@@ -95,6 +99,7 @@ public class IntegrationController {
         @RequestParam(name = "force", defaultValue = "false") boolean force,
         @AuthenticationPrincipal User user
     ) {
+        auth.assertWorkspaceOwner(user.getId(), workspaceId);
         Platform p = Platform.valueOf(platform.toUpperCase());
         String state = UUID.randomUUID().toString();
         Map<Platform, SocialMediaService> serviceMap = platformServices.stream()
@@ -267,8 +272,10 @@ public class IntegrationController {
     @Operation(summary = "Disconnect all accounts for a platform")
     public ResponseEntity<Void> disconnect(
         @PathVariable Long workspaceId,
-        @PathVariable String platform
+        @PathVariable String platform,
+        @AuthenticationPrincipal User user
     ) {
+        auth.assertWorkspaceOwner(user.getId(), workspaceId);
         Platform p = Platform.valueOf(platform.toUpperCase());
         List<SocialAccount> accounts = socialAccountRepository
             .findByWorkspaceIdAndPlatform(workspaceId, p);
@@ -284,8 +291,10 @@ public class IntegrationController {
     public ResponseEntity<Void> disconnectOne(
         @PathVariable Long workspaceId,
         @PathVariable String platform,
-        @PathVariable String accountId
+        @PathVariable String accountId,
+        @AuthenticationPrincipal User user
     ) {
+        auth.assertWorkspaceOwner(user.getId(), workspaceId);
         Platform p = Platform.valueOf(platform.toUpperCase());
         socialAccountRepository
             .findByWorkspaceIdAndPlatformAndAccountId(workspaceId, p, accountId)
@@ -323,14 +332,13 @@ public class IntegrationController {
     }
 
     private boolean isWorkspaceAccessible(Long workspaceId, User user) {
-        // The rest of the controller doesn't currently enforce workspace
-        // membership (callers pass workspaceId in the path; existing endpoints
-        // trust it). The picker endpoints carry secrets (page tokens) so a
-        // stricter check is warranted here, but the membership relation isn't
-        // modeled yet. For now, require the authenticated user to own at least
-        // one social_account or workspace row matching workspaceId — at minimum
-        // they must be logged in. Tighten when workspace membership lands.
-        return user != null;
+        if (user == null || workspaceId == null) return false;
+        try {
+            auth.assertWorkspaceOwner(user.getId(), workspaceId);
+            return true;
+        } catch (RuntimeException e) {
+            return false;
+        }
     }
 
     private SocialAccountResponse toResponse(SocialAccount a) {

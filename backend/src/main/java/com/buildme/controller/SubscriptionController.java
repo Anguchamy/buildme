@@ -3,13 +3,16 @@ package com.buildme.controller;
 import com.buildme.dto.request.CreateSubscriptionRequest;
 import com.buildme.dto.request.VerifyPaymentRequest;
 import com.buildme.dto.response.SubscriptionResponse;
+import com.buildme.model.User;
 import com.buildme.service.SubscriptionService;
+import com.buildme.service.WorkspaceAuthorization;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -20,11 +23,16 @@ import java.util.Map;
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
+    private final WorkspaceAuthorization auth;
 
     @GetMapping("/api/subscriptions/{workspaceId}")
     @Operation(summary = "Get workspace subscription")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<SubscriptionResponse> getSubscription(@PathVariable Long workspaceId) {
+    public ResponseEntity<SubscriptionResponse> getSubscription(
+        @PathVariable Long workspaceId,
+        @AuthenticationPrincipal User user
+    ) {
+        auth.assertWorkspaceOwner(user.getId(), workspaceId);
         return ResponseEntity.ok(subscriptionService.getSubscription(workspaceId));
     }
 
@@ -35,8 +43,10 @@ public class SubscriptionController {
     @Operation(summary = "Create Razorpay order for plan upgrade")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<Map<String, Object>> initiateUpgrade(
-        @Valid @RequestBody CreateSubscriptionRequest request
+        @Valid @RequestBody CreateSubscriptionRequest request,
+        @AuthenticationPrincipal User user
     ) {
+        auth.assertWorkspaceOwner(user.getId(), request.workspaceId());
         return ResponseEntity.ok(subscriptionService.initiateUpgrade(request.workspaceId(), request.planType()));
     }
 
@@ -47,8 +57,10 @@ public class SubscriptionController {
     @Operation(summary = "Verify Razorpay payment and activate subscription")
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<SubscriptionResponse> verifyPayment(
-        @Valid @RequestBody VerifyPaymentRequest request
+        @Valid @RequestBody VerifyPaymentRequest request,
+        @AuthenticationPrincipal User user
     ) {
+        auth.assertWorkspaceOwner(user.getId(), request.workspaceId());
         return ResponseEntity.ok(subscriptionService.verifyAndActivate(
             request.orderId(), request.paymentId(), request.signature(),
             request.workspaceId(), request.planType()
@@ -58,7 +70,11 @@ public class SubscriptionController {
     @PostMapping("/api/subscriptions/{workspaceId}/cancel")
     @Operation(summary = "Cancel subscription at period end")
     @SecurityRequirement(name = "bearerAuth")
-    public ResponseEntity<SubscriptionResponse> cancelSubscription(@PathVariable Long workspaceId) {
+    public ResponseEntity<SubscriptionResponse> cancelSubscription(
+        @PathVariable Long workspaceId,
+        @AuthenticationPrincipal User user
+    ) {
+        auth.assertWorkspaceOwner(user.getId(), workspaceId);
         return ResponseEntity.ok(subscriptionService.cancelSubscription(workspaceId));
     }
 }

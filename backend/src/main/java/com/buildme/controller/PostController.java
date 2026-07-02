@@ -6,6 +6,7 @@ import com.buildme.dto.request.UpdatePostRequest;
 import com.buildme.dto.response.PostResponse;
 import com.buildme.model.User;
 import com.buildme.service.PostService;
+import com.buildme.service.WorkspaceAuthorization;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -28,6 +29,7 @@ import java.util.List;
 public class PostController {
 
     private final PostService postService;
+    private final WorkspaceAuthorization auth;
 
     @PostMapping
     @Operation(summary = "Create a post")
@@ -36,6 +38,7 @@ public class PostController {
         @AuthenticationPrincipal User user,
         @Valid @RequestBody CreatePostRequest request
     ) {
+        auth.assertWorkspaceOwner(user.getId(), workspaceId);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(postService.create(workspaceId, user.getId(), request));
     }
@@ -54,8 +57,10 @@ public class PostController {
     public ResponseEntity<List<PostResponse>> calendar(
         @PathVariable Long workspaceId,
         @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime start,
-        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime end
+        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) OffsetDateTime end,
+        @AuthenticationPrincipal User user
     ) {
+        auth.assertWorkspaceOwner(user.getId(), workspaceId);
         return ResponseEntity.ok(postService.findCalendarPosts(workspaceId, start, end));
     }
 
@@ -66,6 +71,7 @@ public class PostController {
         @PathVariable Long postId,
         @AuthenticationPrincipal User user
     ) {
+        auth.assertPostInWorkspace(user.getId(), workspaceId, postId);
         return ResponseEntity.ok(postService.findById(postId, user.getId()));
     }
 
@@ -77,6 +83,7 @@ public class PostController {
         @AuthenticationPrincipal User user,
         @RequestBody UpdatePostRequest request
     ) {
+        auth.assertPostInWorkspace(user.getId(), workspaceId, postId);
         return ResponseEntity.ok(postService.update(postId, user.getId(), request));
     }
 
@@ -88,6 +95,7 @@ public class PostController {
         @AuthenticationPrincipal User user,
         @Valid @RequestBody SchedulePostRequest request
     ) {
+        auth.assertPostInWorkspace(user.getId(), workspaceId, postId);
         return ResponseEntity.ok(postService.schedule(postId, user.getId(), request));
     }
 
@@ -98,6 +106,7 @@ public class PostController {
         @PathVariable Long postId,
         @AuthenticationPrincipal User user
     ) {
+        auth.assertPostInWorkspace(user.getId(), workspaceId, postId);
         postService.delete(postId, user.getId());
         return ResponseEntity.noContent().build();
     }

@@ -4,6 +4,7 @@ import com.buildme.dto.request.UploadMediaRequest;
 import com.buildme.dto.response.MediaAssetResponse;
 import com.buildme.model.User;
 import com.buildme.service.MediaService;
+import com.buildme.service.WorkspaceAuthorization;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -27,6 +28,7 @@ import java.util.Map;
 public class MediaController {
 
     private final MediaService mediaService;
+    private final WorkspaceAuthorization auth;
 
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     @Operation(summary = "Direct multipart upload (dev)")
@@ -35,6 +37,7 @@ public class MediaController {
         @AuthenticationPrincipal User user,
         @RequestParam("file") MultipartFile file
     ) {
+        auth.assertWorkspaceOwner(user.getId(), workspaceId);
         return ResponseEntity.ok(mediaService.uploadDirect(workspaceId, user.getId(), file));
     }
 
@@ -45,6 +48,7 @@ public class MediaController {
         @AuthenticationPrincipal User user,
         @Valid @RequestBody UploadMediaRequest request
     ) {
+        auth.assertWorkspaceOwner(user.getId(), workspaceId);
         Map<String, Object> result = mediaService.generateUploadUrl(
             workspaceId, user.getId(), request.fileName(), request.contentType(), request.fileSize()
         );
@@ -58,6 +62,7 @@ public class MediaController {
         @PathVariable Long assetId,
         @AuthenticationPrincipal User user
     ) {
+        auth.assertMediaInWorkspace(user.getId(), workspaceId, assetId);
         return ResponseEntity.ok(mediaService.confirmUpload(assetId, user.getId()));
     }
 
@@ -65,8 +70,10 @@ public class MediaController {
     @Operation(summary = "Stream media file (proxied from R2)")
     public ResponseEntity<byte[]> getFile(
         @PathVariable Long workspaceId,
-        @PathVariable Long assetId
+        @PathVariable Long assetId,
+        @AuthenticationPrincipal User user
     ) {
+        auth.assertMediaInWorkspace(user.getId(), workspaceId, assetId);
         return mediaService.getFile(workspaceId, assetId);
     }
 
@@ -75,8 +82,10 @@ public class MediaController {
     public ResponseEntity<List<MediaAssetResponse>> list(
         @PathVariable Long workspaceId,
         @RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "20") int size
+        @RequestParam(defaultValue = "20") int size,
+        @AuthenticationPrincipal User user
     ) {
+        auth.assertWorkspaceOwner(user.getId(), workspaceId);
         return ResponseEntity.ok(mediaService.findByWorkspace(workspaceId, page, size));
     }
 
@@ -87,6 +96,7 @@ public class MediaController {
         @PathVariable Long assetId,
         @AuthenticationPrincipal User user
     ) {
+        auth.assertMediaInWorkspace(user.getId(), workspaceId, assetId);
         mediaService.delete(assetId, user.getId());
         return ResponseEntity.noContent().build();
     }
